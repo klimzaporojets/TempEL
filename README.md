@@ -7,7 +7,7 @@ The dataset can be downloaded from [this link](https://cloud.ilabt.imec.be/index
 Currently, the dataset is available in the following two formats: 
 1. ```tempel_v1.0_all```: the dataset files in this directory include the complete text of Wikipedia anchor and target pages
 for each of the instances. 
-2. ```tempel_v1.0_only_bert_tokenized```: the dataset files in this directory only include the trimmed bert tokenization
+2. ```tempel_v1.0_only_bert_tokenized```: the dataset files in this directory only include the truncated bert tokenization
 used in our baseline model. 
 
 ## Code and Models
