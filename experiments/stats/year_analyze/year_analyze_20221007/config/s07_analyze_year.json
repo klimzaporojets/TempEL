@@ -1,0 +1,155 @@
+{
+  "input_dir_dataset": "experiments/dataset_creation/data_20220615/output/final_output/",
+  "_serialized_gold_path": "experiments/stats/results_metrics/metrics_20220630_epoch9/output/serialized_gold/serialized_gold.pickle",
+  "_serialized_filtering_path": "experiments/stats/results_metrics/metrics_20220630_epoch9/output/serialized_gold/serialized_filtering.pickle",
+  "output_csv_path": "experiments/stats/year_analyze/year_analyze_20221007/output/serialized_csv/results2_mean_new_entities.csv",
+  "look_in_entity_text": false,
+  "look_in_mention_context": false,
+  "models": [
+    "biencoder"
+  ],
+  "category_new_entities": "new_entities",
+  "only_corona_vs_others": false,
+  "_filter": [
+    "covid",
+    "covid-19",
+    "coronavirus"
+  ],
+  "context_length": 128,
+  "top_k_list": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "_cuts_to_show": [
+    "2021-01-01T00:00:00Z",
+    "2022-01-01T00:00:00Z"
+  ],
+  "cuts_to_show": [
+    "2013-01-01T00:00:00Z",
+    "2014-01-01T00:00:00Z",
+    "2015-01-01T00:00:00Z",
+    "2016-01-01T00:00:00Z",
+    "2017-01-01T00:00:00Z",
+    "2018-01-01T00:00:00Z",
+    "2019-01-01T00:00:00Z",
+    "2020-01-01T00:00:00Z",
+    "2021-01-01T00:00:00Z",
+    "2022-01-01T00:00:00Z"
+  ],
+  "fine_tune_cuts": [
+    {
+      "timestamp": "2013-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2013/json/test/"
+    },
+    {
+      "timestamp": "2014-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2014/json/test/"
+    },
+    {
+      "timestamp": "2015-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2015/json/test/"
+    },
+    {
+      "timestamp": "2016-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2016/json/test/"
+    },
+    {
+      "timestamp": "2017-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2017/json/test/"
+    },
+    {
+      "timestamp": "2018-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2018/json/test/"
+    },
+    {
+      "timestamp": "2019-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2019/json/test/"
+    },
+    {
+      "timestamp": "2020-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2020/json/test/"
+    },
+    {
+      "timestamp": "2021-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2021/json/test/"
+    },
+    {
+      "timestamp": "2022-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/evaluate_20220630_epoch9/output/predictions/2022/json/test/"
+    }
+  ],
+  "subsets": [
+    {
+      "subset_name": "test",
+      "subset_cuts": [
+        {
+          "timestamp": "2013-01-01T00:00:00Z",
+          "input_file_name": "2013-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2013-01-01T00:00:00Z_e2013-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2014-01-01T00:00:00Z",
+          "input_file_name": "2014-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2014-01-01T00:00:00Z_e2014-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2015-01-01T00:00:00Z",
+          "input_file_name": "2015-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2015-01-01T00:00:00Z_e2015-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2016-01-01T00:00:00Z",
+          "input_file_name": "2016-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2016-01-01T00:00:00Z_e2016-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2017-01-01T00:00:00Z",
+          "input_file_name": "2017-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2017-01-01T00:00:00Z_e2017-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2018-01-01T00:00:00Z",
+          "input_file_name": "2018-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2018-01-01T00:00:00Z_e2018-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2019-01-01T00:00:00Z",
+          "input_file_name": "2019-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2019-01-01T00:00:00Z_e2019-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2020-01-01T00:00:00Z",
+          "input_file_name": "2020-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2020-01-01T00:00:00Z_e2020-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2021-01-01T00:00:00Z",
+          "input_file_name": "2021-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2021-01-01T00:00:00Z_e2021-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2022-01-01T00:00:00Z",
+          "input_file_name": "2022-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2022-01-01T00:00:00Z_e2022-01-01T00:00:00Z_all.jsonl"
+        }
+      ],
+      "_subset_cuts": [
+        {
+          "timestamp": "2021-01-01T00:00:00Z",
+          "input_file_name": "2021-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2021-01-01T00:00:00Z_e2021-01-01T00:00:00Z_all.jsonl"
+        },
+        {
+          "timestamp": "2022-01-01T00:00:00Z",
+          "input_file_name": "2022-01-01T00:00:00Z_test_all.jsonl",
+          "pred_file_name": "pred_test_m2022-01-01T00:00:00Z_e2022-01-01T00:00:00Z_all.jsonl"
+        }
+      ]
+    }
+  ]
+}

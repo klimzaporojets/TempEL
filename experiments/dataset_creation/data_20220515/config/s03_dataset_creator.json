@@ -1,0 +1,91 @@
+{
+  "tokenizer": {
+    "bert_model": "bert-large-uncased",
+    "lowercase": true,
+    "bert_cache_dir": "data/caches/cache_bert/"
+  },
+  "queues": {
+    "article_queue_size": 500,
+    "process_file_queue_size": 10000
+  },
+  "output_dir": "experiments/dataset_creation/data_20220515/output/",
+  "input_file_path": "experiments/snapshot_extraction/snap_20220515/output/wikipedia_evolution_content.jsonl",
+  "input_pages_with_redirects_path": "experiments/snapshot_extraction/snap_20220515/output/wikipedia_pages_with_redirect_in_history.csv",
+  "input_dir_stats": "experiments/snapshot_extraction/snap_20220515/output/stats/",
+  "prefix_prior_link_stats": "alias_tables/prior_link_stats_",
+  "prefix_dict_inverse_index": "alias_tables/dict_inverse_index_",
+  "prefix_page_info": "snapshot_stats/page_info_",
+  "debug": false,
+  "max_len_context": 128,
+  "max_len_context_tokenized": 200,
+  "time_cuts": [
+    "2013-01-01T00:00:00Z",
+    "2014-01-01T00:00:00Z",
+    "2015-01-01T00:00:00Z",
+    "2016-01-01T00:00:00Z",
+    "2017-01-01T00:00:00Z",
+    "2018-01-01T00:00:00Z",
+    "2019-01-01T00:00:00Z",
+    "2020-01-01T00:00:00Z",
+    "2021-01-01T00:00:00Z",
+    "2022-01-01T00:00:00Z"
+  ],
+  "common_filters": {
+    "min_inlinks": 10,
+    "min_nr_distinct_mentions_per_entity": 3,
+    "max_avg_prior_entity": 1.0,
+    "max_prior_mention": 1.0,
+    "min_avg_prior_rank_entity": 1.0,
+    "min_prior_rank_mention": 1,
+    "min_prior_rank_mention_wrt_men": 2,
+    "min_edit_distance_mention_title": 0.0,
+    "min_edit_distance_mention_title_ratio": 0.2,
+    "min_prior_mention": 0.0001,
+    "min_edit_distance_ratio_between_subsets": 0.2,
+    "string_in_another_string_when_clustering": false,
+    "prefer_train_cluster": false,
+    "min_len_target_page": 10,
+    "min_same_surface_form_mentions_to_entity": 1
+  },
+  "categories": [
+    {
+      "name": "continual",
+      "subsets": [
+        {
+          "max_mentions_per_entity": 500,
+          "name": "train"
+        },
+        {
+          "max_mentions_per_entity": 10,
+          "name": "validation"
+        },
+        {
+          "max_mentions_per_entity": 10,
+          "name": "test"
+        }
+      ],
+      "category_filter": {
+        "max_entities": 10000
+      }
+    },
+    {
+      "name": "new",
+      "first_cut_from": "2012-01-01T00:00:00Z",
+      "subsets": [
+        {
+          "max_mentions_per_entity": 500,
+          "name": "train"
+        },
+        {
+          "max_mentions_per_entity": 10,
+          "name": "validation"
+        },
+        {
+          "max_mentions_per_entity": 10,
+          "name": "test"
+        }
+      ]
+    }
+  ],
+  "seed": -1
+}

@@ -1,0 +1,22 @@
+{
+  "output_dir": "experiments/snapshot_extraction/snap_20220515/output/stats/alias_tables/",
+  "input_dir": "experiments/snapshot_extraction/snap_20220515/output/stats/snapshot_stats/",
+  "time_cut_list": [
+    "2013-01-01T00:00:00Z",
+    "2014-01-01T00:00:00Z",
+    "2015-01-01T00:00:00Z",
+    "2016-01-01T00:00:00Z",
+    "2017-01-01T00:00:00Z",
+    "2018-01-01T00:00:00Z",
+    "2019-01-01T00:00:00Z",
+    "2020-01-01T00:00:00Z",
+    "2021-01-01T00:00:00Z",
+    "2022-01-01T00:00:00Z"
+  ],
+  "prefix_page_info": "page_info_",
+  "prefix_page_link_stats": "page_link_stats_",
+  "title_changes_file_name": "title_changes.csv",
+  "path_wikipedia_wikidata_map": "data/wikipedia_dump/enwiki_20220201/enwiki-20220201-page_props.sql.gz",
+  "caches_dir": "data/caches/wiki_history_reader/enwiki_20220201/",
+  "debug": false
+}

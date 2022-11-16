@@ -1,0 +1,5 @@
+{
+  "time_cut": "2021-01-01T00:00:00Z",
+  "output_path": "experiments/models/blink/biencoder/train/train_20220515/output/models/2021/",
+  "output_model_name": "model_trained_on_2021-01-01T00:00:00Z_lr1e-4.bin"
+}

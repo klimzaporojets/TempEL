@@ -1,0 +1,78 @@
+{
+  "base_experiment_path": "experiments/dataset_creation/20220515/",
+  "cand_faiss_path": "encoded_representations/faiss/trained_on_20220615_final_dataset_v3/20220630/2018-01-01T00:00:00Z_lr1e-4_ep9/",
+  "data_path": "20220615_final_dataset_v3/final_output/",
+  "output_dir_predictions": "predictions/biencoder/20220630/encoded-2018-ep9/",
+  "nr_threads": 40,
+  "initial_capacity": 1000000,
+  "increment_capacity": 100000000,
+  "max_cand_length": 128,
+  "max_context_length": 128,
+  "dataset_filename_prefix": "",
+  "time_cut_list": [
+    {
+      "mentions_cut":"2013-01-01T00:00:00Z",
+      "entities_cut":"2013-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2014-01-01T00:00:00Z",
+      "entities_cut":"2014-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2015-01-01T00:00:00Z",
+      "entities_cut":"2015-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2016-01-01T00:00:00Z",
+      "entities_cut":"2016-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2017-01-01T00:00:00Z",
+      "entities_cut":"2017-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2018-01-01T00:00:00Z",
+      "entities_cut":"2018-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2019-01-01T00:00:00Z",
+      "entities_cut":"2019-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2020-01-01T00:00:00Z",
+      "entities_cut":"2020-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2021-01-01T00:00:00Z",
+      "entities_cut":"2021-01-01T00:00:00Z"
+    },
+    {
+      "mentions_cut":"2022-01-01T00:00:00Z",
+      "entities_cut":"2022-01-01T00:00:00Z"
+    }
+  ],
+  "faiss_hnsw": false,
+  "faiss_index_buffer": 50000,
+  "evaluation_subsets": [
+    "test",
+    "validation"
+  ],
+  "bert_model": "bert-large-uncased",
+  "path_to_model": "models/biencoder/20220615_final_dataset_v3/20220630/model_trained_on_2018-01-01T00:00:00Z_lr1e-4/epoch_9/model_trained_on_2018-01-01T00:00:00Z_lr1e-4.bin",
+  "lowercase": true,
+  "bert_cache_dir": "data/caches/cache_bert/",
+  "no_cuda": false,
+  "use_candidate_title": true,
+  "silent": false,
+  "debug": false,
+  "debug_size": 100,
+  "out_dim": 1,
+  "pull_from_layer": -1,
+  "add_linear": false,
+  "encode_batch_size": 8,
+  "eval_batch_size": 2,
+  "save_topk_result": true,
+  "faiss_on_gpu": true,
+  "top_k": 64,
+  "json_output": true
+}

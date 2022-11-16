@@ -1,0 +1,7 @@
+{
+  "base_experiment_path": "experiments/snapshot_extraction/snap_20220515/output/",
+  "input_content_path": "wikipedia_evolution_content.jsonl",
+  "output_path": "wikipedia_pages_with_redirect_in_history.csv",
+  "debug": false,
+  "nr_threads": 20
+}
