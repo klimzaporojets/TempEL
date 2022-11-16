@@ -1,0 +1,7 @@
+mwparserfromhell==0.6.4
+py7zr==0.18.3
+requests==2.27.1
+pytorch-transformers==1.2.0
+pylzma==0.5.0
+GitPython==3.1.27
+editdistance==0.6.0
