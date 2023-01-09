@@ -13,6 +13,7 @@ used in our baseline model.
 ## Dataset creation, code and models
 ### Dataset creation
 __Step 0: download the necessary Wikipedia tables and history logs__
+The disk space requirement of this step is of 400 GB. 
 
 The TempEL creation pipeline begins with history logs of Wikipedia as well as 
 Wikipedia sql tables with auxiliary information (e.g., tables listing all the redirect pages in Wikipedia), 
@@ -20,8 +21,8 @@ which can be downloaded from our cloud storage using the following commands:
 ```
 mkdir -p data/wikipedia_dump/enwiki_20220201/pages_meta_history/
 wget -O data/wikipedia_dump/enwiki_20220201/zipped_enwiki.zip https://cloud.ilabt.imec.be/index.php/s/8KtT3HxDHybsNmt/download
-unzip data/wikipedia_dump/enwiki_20220201/zipped_enwiki.zip data/wikipedia_dump/enwiki_20220201/
-rm data/wikipedia_dump/enwiki_20220201/pages_meta_history/zipped_history.zip 
+unzip data/wikipedia_dump/enwiki_20220201/zipped_enwiki.zip -d data/wikipedia_dump/
+rm data/wikipedia_dump/enwiki_20220201/zipped_enwiki.zip
 ```
 The cloud console with all the Wikipedia files can also be accessed at the following link: 
 [https://cloud.ilabt.imec.be/index.php/s/8KtT3HxDHybsNmt](https://cloud.ilabt.imec.be/index.php/s/8KtT3HxDHybsNmt). 

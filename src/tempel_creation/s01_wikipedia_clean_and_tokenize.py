@@ -576,7 +576,7 @@ if __name__ == '__main__':
     parser.add_argument('--nr_threads_processor', required=False, type=int,
                         default=40,
                         help='Nr of threads that will process the data')
-    parser.add_argument('--nr_threads_reader', required=False, type=str,
+    parser.add_argument('--nr_threads_reader', required=False, type=int,
                         default=20,
                         help='Nr of threads that read each of the history log files')
 
