@@ -13,10 +13,10 @@ from pytorch_transformers import BertTokenizer
 from torch.utils.data import TensorDataset, SequentialSampler, DataLoader
 from tqdm import tqdm
 
-from models.biencoder.biencoder import BiEncoder, to_bert_input, NULL_IDX
-from models.biencoder.misc_utils import load_model, WORLDS
-from models.utils.params import ENT_START_TAG, ENT_END_TAG, ENT_TITLE_TAG
-from utils import tempel_logger
+from src.models.biencoder.biencoder import BiEncoder, to_bert_input, NULL_IDX
+from src.models.biencoder.misc_utils import load_model, WORLDS
+from src.models.utils.params import ENT_START_TAG, ENT_END_TAG, ENT_TITLE_TAG
+from src.utils import tempel_logger
 
 # WORLDS = [
 #     'wikipedia'
@@ -44,12 +44,13 @@ def get_context_representation(
 
 ):
     mention_tokens = []
-    if sample['mention_bert_tokenized'] and len(sample['mention_bert_tokenized']) > 0:
-        mention_tokens = sample['mention_bert_tokenized']
+    # if sample['mention_bert_tokenized'] and len(sample['mention_bert_tokenized']) > 0:
+    if sample['mention_bert'] and len(sample['mention_bert']) > 0:
+        mention_tokens = sample['mention_bert']
         mention_tokens = [ent_start_token] + mention_tokens + [ent_end_token]
 
-    context_left = sample['context_left_bert_tokenized']
-    context_right = sample['context_right_bert_tokenized']
+    context_left = sample['context_left_bert']
+    context_right = sample['context_right_bert']
 
     left_quota = (max_seq_length - len(mention_tokens)) // 2 - 1
     right_quota = max_seq_length - len(mention_tokens) - left_quota - 2
@@ -229,10 +230,10 @@ def get_candidate_representation(
 
 
 def get_first_record(params, sample, tokenizer, src):
-    label_text = sample['target_bert_tokenized']
+    label_text = sample['target_bert']
     title = None
     if params['use_candidate_title']:
-        title = sample.get('target_title_bert_tokenized', None)
+        title = sample.get('target_title_bert', None)
     label_tokens = get_candidate_representation(
         label_text, tokenizer, params['max_cand_length'], title,
     )
@@ -856,8 +857,8 @@ def process_mention_data(
             ent_end_token,
         )
 
-        label = sample['target_bert_tokenized']
-        title = sample['target_title_bert_tokenized']
+        label = sample['target_bert']
+        title = sample['target_title_bert']
         label_tokens = get_candidate_representation(
             label, tokenizer, max_cand_length, title,
         )
@@ -927,10 +928,8 @@ def get_dataset_eval(
 
     processed_samples = []
 
-    use_world = True
-    # TODO!!! here make sure it is in the same file!!
-    # file_name = '{}_{}_random.jsonl'.format(subset_name, date_cut)
-    file_name = '{}{}_{}_all.jsonl'.format(params['dataset_filename_prefix'], date_cut['mentions_cut'], subset_name)
+    # file_name = '{}{}_{}_all.jsonl'.format(params['dataset_filename_prefix'], date_cut['mentions_cut'], subset_name)
+    file_name = (date_cut['test_file'])
     txt_file_path = os.path.join(dataset_path, file_name)
 
     if return_text:
@@ -961,11 +960,11 @@ def get_dataset_eval(
 
             if return_text:
                 # TODO first removes text to make it smaller then returns
-                del sample['context_right_bert_tokenized']
-                del sample['context_left_bert_tokenized']
-                del sample['mention_bert_tokenized']
-                del sample['target_bert_tokenized']
-                del sample['target_title_bert_tokenized']
+                del sample['context_right_bert']
+                del sample['context_left_bert']
+                del sample['mention_bert']
+                del sample['target_bert']
+                del sample['target_title_bert']
                 samples.append(sample)
 
             record = {
@@ -974,21 +973,21 @@ def get_dataset_eval(
             record['orig_index'] = idx
 
             if not debug:
-                if sample['target_wikidata_qid'] in wikidata_qid_to_label_id[date_cut['entities_cut']]:
-                    gold_label_id = wikidata_qid_to_label_id[date_cut['entities_cut']][sample['target_wikidata_qid']]
+                if sample['target_qid'] in wikidata_qid_to_label_id[date_cut['entities_cut']]:
+                    gold_label_id = wikidata_qid_to_label_id[date_cut['entities_cut']][sample['target_qid']]
                 else:
                     logger.warning('WARNING CAN NOT FIND THE target_wikidata_qid!!! for cut, '
                                    'CHOSING random!!! SHOULD NOT HAPPEN!!! %s '
-                                   ' exact qid: %s' % (str(date_cut['entities_cut']), sample['target_wikidata_qid']))
+                                   ' exact qid: %s' % (str(date_cut['entities_cut']), sample['target_qid']))
                     continue
             else:
                 # if we are debugging, not all labels will be present in dictionary, so we just put a random one
                 # if the gold one doesn't exist
-                if sample['target_wikidata_qid'] not in wikidata_qid_to_label_id[date_cut['entities_cut']]:
+                if sample['target_qid'] not in wikidata_qid_to_label_id[date_cut['entities_cut']]:
                     lst_all_label_ids = list(wikidata_qid_to_label_id[date_cut['entities_cut']].values())
                     gold_label_id = random.choice(lst_all_label_ids)
                 else:
-                    gold_label_id = wikidata_qid_to_label_id[date_cut['entities_cut']][sample['target_wikidata_qid']]
+                    gold_label_id = wikidata_qid_to_label_id[date_cut['entities_cut']][sample['target_qid']]
 
             record['gold_label_id'] = gold_label_id
 

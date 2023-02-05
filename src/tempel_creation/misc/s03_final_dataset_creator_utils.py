@@ -12,13 +12,13 @@ from typing import List, Set, Dict
 import pandas as pd
 from pytorch_transformers import BertTokenizer
 
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from tempel_creation.misc.cleaning import clean_text_from_link_markers
-from tempel_creation.misc.compiled_regexes import compiled_regexes
-from tempel_creation.misc.utils import from_bert_to_text
-from tempel_creation.s01_wikipedia_clean_and_tokenize import parse_mentions_from_source
-from tempel_creation.s02_alias_table_generator import one_string_in_another, get_ratio_edit_distance_v2
-from utils import tempel_logger
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.tempel_creation.misc.cleaning import clean_text_from_link_markers
+from src.tempel_creation.misc.compiled_regexes import compiled_regexes
+from src.tempel_creation.misc.utils import from_bert_to_text
+from src.tempel_creation.s01_wikipedia_clean_and_tokenize import parse_mentions_from_source
+from src.tempel_creation.s02_alias_table_generator import one_string_in_another, get_ratio_edit_distance_v2
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -84,11 +84,11 @@ def get_random_mentions_with_context(anchor_mention_text, target_orig_title, sou
 
         context_right_bert = bert_tokenizer.tokenize(context_right_short)
 
-        to_ret_curr_mention['context_right_bert_tokenized'] = context_right_bert
+        to_ret_curr_mention['context_right_bert'] = context_right_bert
         context_left_bert = bert_tokenizer.tokenize(context_left_short)
-        to_ret_curr_mention['context_left_bert_tokenized'] = context_left_bert
+        to_ret_curr_mention['context_left_bert'] = context_left_bert
         mention_bert_tokenized = bert_tokenizer.tokenize(curr_link['anchor_mention_text'])
-        to_ret_curr_mention['mention_bert_tokenized'] = mention_bert_tokenized
+        to_ret_curr_mention['mention_bert'] = mention_bert_tokenized
         to_ret_mentions.append(to_ret_curr_mention)
     return to_ret_mentions
 
@@ -235,7 +235,7 @@ def get_evenly_distributed_mentions_all(
                                     'target_orig_title': curr_men_in_subset['curr_row'].target_wikipedia_title_orig,
                                     'target_title_2022': curr_men_in_subset['curr_row'].target_title_2022,
                                     'target_page_id': curr_men_in_subset['curr_row'].target_page_id,
-                                    'target_wikidata_qid': curr_men_in_subset['curr_row'].target_wikidata_qid,
+                                    'target_qid': curr_men_in_subset['curr_row'].target_wikidata_qid,
                                     'filtered_date': curr_men_in_subset['curr_row'].filtered_date,
                                     # count_mentions: total number this mention appears in wikipedia (check, some
                                     # filters might be applied before calculating it)
@@ -269,7 +269,7 @@ def get_evenly_distributed_mentions_all(
                                     'entity_prior': entity_prior,
                                     ###### end new ones (01/05/2022)
                                     'category': category_name,
-                                    'anchor_wikidata_qid': curr_anchor_page[0]
+                                    'anchor_qid': curr_anchor_page[0]
                                 }
                                 nr_mentions_covered_dict[idx_page] = to_append_dict2_anchor
                                 are_there_more_mentions_in_anchor_pages = True
@@ -288,11 +288,11 @@ def get_evenly_distributed_mentions_all(
                         if to_append_dict2_anchor is None:
                             continue
 
-                        if to_append_dict2_anchor['anchor_wikidata_qid'] not in \
+                        if to_append_dict2_anchor['anchor_qid'] not in \
                                 dict2_anchor_pages_to_search[curr_time_cut]:
                             dict2_anchor_pages_to_search[curr_time_cut][
-                                to_append_dict2_anchor['anchor_wikidata_qid']] = list()
-                        dict2_anchor_pages_to_search[curr_time_cut][to_append_dict2_anchor['anchor_wikidata_qid']] \
+                                to_append_dict2_anchor['anchor_qid']] = list()
+                        dict2_anchor_pages_to_search[curr_time_cut][to_append_dict2_anchor['anchor_qid']] \
                             .append(to_append_dict2_anchor)
                         nr_appended += 1
 
@@ -432,7 +432,7 @@ def get_evenly_distributed_mentions_all(
                             'target_orig_title': curr_men_in_subset['curr_row'].target_wikipedia_title_orig,
                             'target_title_2022': curr_men_in_subset['curr_row'].target_title_2022,
                             'target_page_id': curr_men_in_subset['curr_row'].target_page_id,
-                            'target_wikidata_qid': curr_men_in_subset['curr_row'].target_wikidata_qid,
+                            'target_qid': curr_men_in_subset['curr_row'].target_wikidata_qid,
                             'filtered_date': curr_men_in_subset['curr_row'].filtered_date,
                             # count_mentions: total number this mention appears in wikipedia (check, some
                             # filters might be applied before calculating it)
@@ -470,7 +470,7 @@ def get_evenly_distributed_mentions_all(
                             'nr_dist_men_per_cut_per_sset': nr_dist_men_per_cut_per_sset,
                             'nr_mentions_to_extract_per_subset': nr_mentions_per_subset,
                             'category': category_name,
-                            'anchor_wikidata_qid': curr_anchor_page[0]
+                            'anchor_qid': curr_anchor_page[0]
                         }
                         nr_mentions_covered_dict[idx_page] = to_append_dict2_anchor
                         are_there_more_mentions_in_anchor_pages = True
@@ -488,10 +488,10 @@ def get_evenly_distributed_mentions_all(
             for _, to_append_dict2_anchor in nr_mentions_covered_dict.items():
                 if to_append_dict2_anchor is None:
                     continue
-                if to_append_dict2_anchor['anchor_wikidata_qid'] not in dict2_anchor_pages_to_search[curr_time_cut]:
+                if to_append_dict2_anchor['anchor_qid'] not in dict2_anchor_pages_to_search[curr_time_cut]:
                     dict2_anchor_pages_to_search[curr_time_cut][
-                        to_append_dict2_anchor['anchor_wikidata_qid']] = list()
-                dict2_anchor_pages_to_search[curr_time_cut][to_append_dict2_anchor['anchor_wikidata_qid']] \
+                        to_append_dict2_anchor['anchor_qid']] = list()
+                dict2_anchor_pages_to_search[curr_time_cut][to_append_dict2_anchor['anchor_qid']] \
                     .append(to_append_dict2_anchor)
                 nr_appended += 1
     ######## TODO - END repeated logic - see if can be simplified
@@ -536,7 +536,7 @@ def apply_filters(filter_config, df_to_filter: pd.DataFrame, description_filter,
     logger.info('%s is df_to_filter.shape after df_to_filter[\'anchor_mention_text\'].notna()' %
                 str(df_to_filter.shape))
     #
-    # Index(['anchor_mention_text', 'target_wikidata_qid',
+    # Index(['anchor_mention_text', 'target_qid',
     #        'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
     #        'count_mentions', 'nr_links_mention_per_entity', 'prior',
     #        'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -593,7 +593,7 @@ def apply_filters(filter_config, df_to_filter: pd.DataFrame, description_filter,
     #  once we deal with redirects, will have to see have to refactor this part
     start_redirects = time.time()
     df_to_filter = df_to_filter[
-        df_to_filter.apply(lambda x: x['target_wikidata_qid'] not in wikidata_qids_with_redirects_in_history, axis=1)]
+        df_to_filter.apply(lambda x: x['target_qid'] not in wikidata_qids_with_redirects_in_history, axis=1)]
     end_redirects = time.time()
     logger.info('%s is df_to_filter.shape after filtering out target wikidata qids with redirects in history' %
                 str(df_to_filter.shape))
@@ -857,12 +857,12 @@ def write_to_output_file(arq: ArticleReadingQueue, v_shutdown_writer, config, al
                 for curr_mention_instance in json_w_content_to_write['extracted_mention_instances']:
                     copied_attrs_to_write = mention_attributes.copy()
                     del copied_attrs_to_write['nr_mentions']
-                    copied_attrs_to_write['context_right_bert_tokenized'] = \
-                        curr_mention_instance['context_right_bert_tokenized']
-                    copied_attrs_to_write['context_left_bert_tokenized'] = \
-                        curr_mention_instance['context_left_bert_tokenized']
-                    copied_attrs_to_write['mention_bert_tokenized'] = curr_mention_instance[
-                        'mention_bert_tokenized']
+                    copied_attrs_to_write['context_right_bert'] = \
+                        curr_mention_instance['context_right_bert']
+                    copied_attrs_to_write['context_left_bert'] = \
+                        curr_mention_instance['context_left_bert']
+                    copied_attrs_to_write['mention_bert'] = curr_mention_instance[
+                        'mention_bert']
 
                     copied_attrs_to_write['context_right'] = curr_mention_instance['context_right']
                     copied_attrs_to_write['context_left'] = curr_mention_instance['context_left']

@@ -13,12 +13,12 @@ import torch
 from pytorch_transformers import BertTokenizer
 from torch.utils.data import SequentialSampler, DataLoader
 
-from models.biencoder.build_faiss_index_passages import faiss_index_passages_single_date_cut
-from models.biencoder.data_process import get_candidate_passage_representation, get_mentions_from_dataset_wiki_cuts
-from models.biencoder.misc_utils import get_passages_bert_tokens_input, Stats, generate_and_save_json
-from models.biencoder.nn_prediction import get_topk_faiss_predictions_passages
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from utils import tempel_logger
+from src.models.biencoder.build_faiss_index_passages import faiss_index_passages_single_date_cut
+from src.models.biencoder.data_process import get_candidate_passage_representation, get_mentions_from_dataset_wiki_cuts
+from src.models.biencoder.misc_utils import get_passages_bert_tokens_input, Stats, generate_and_save_json
+from src.models.biencoder.nn_prediction import get_topk_faiss_predictions_passages
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -154,13 +154,31 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--config_file', required=False, type=str,
-                        # TODO
-                        default='TODO',
-                        help='The config file that contains all the parameters')
+    # we are here 23/01/2023 --> incorporating parent and config configurations
+    # (see also experiments/models/blink/biencoder/evaluate/20220515)
+    parser.add_argument('--config_parent_path', required=False, type=str,
+                        default='experiments/models/blink/biencoder/evaluate/20220515/config/'
+                                's06_config_evaluate_parent.json',
+                        help='Config file with generic experiment hyperparameters shared among all the temporal '
+                             'snapshots')
+
+    parser.add_argument('--config_path', required=True, type=str,
+                        default='experiments/models/blink/biencoder/evaluate/20220515/config/'
+                                's06_config_evaluate_2013.json',
+                        help='Config file with a particular experiment hyperparameters')
+
     args = parser.parse_args()
     logger.info('evaluating faiss biencoder blink: %s' % str(args))
-    config = json.load(open(args.config_file, 'rt'))
+    # config = json.load(open(args.config_file, 'rt'))
+    config = json.load(open(args.config_path, 'rt'))
+    config_parent = json.load(open(args.config_parent_path, 'rt'))
+
+    config_parent['cand_faiss_path'] = config['cand_faiss_path']
+    config_parent['output_dir_predictions'] = config['output_dir_predictions']
+    config_parent['path_to_model'] = config['path_to_model']
+    # config_parent['test_file'] = config['test_file']
+
+    config = config_parent
 
     repo = git.Repo(search_parent_directories=True)
     git_commit_hash = repo.head.object.hexsha

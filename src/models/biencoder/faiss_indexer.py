@@ -3,7 +3,7 @@ import logging
 import faiss
 import numpy as np
 
-from utils import tempel_logger
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

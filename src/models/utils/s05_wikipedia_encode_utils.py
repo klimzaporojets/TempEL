@@ -12,11 +12,11 @@ import torch
 from pytorch_transformers import BertTokenizer
 from torch.utils.data import SequentialSampler, DataLoader
 
-from models.biencoder.biencoder import BiEncoder, to_bert_input, NULL_IDX
-from models.biencoder.data_process import get_candidate_passage_representation
-from models.biencoder.misc_utils import load_model, get_passages_bert_tokens_input
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from utils import tempel_logger
+from src.models.biencoder.biencoder import BiEncoder, to_bert_input, NULL_IDX
+from src.models.biencoder.data_process import get_candidate_passage_representation
+from src.models.biencoder.misc_utils import load_model, get_passages_bert_tokens_input
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

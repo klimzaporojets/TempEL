@@ -13,9 +13,9 @@ import pandas as pd
 import torch
 from tqdm import tqdm
 
-from stats.utils.s04_final_dataset_statistics_change_utils import get_mappings, get_similarities_dataframe
-from tempel_creation.misc.utils import from_bert_to_text, get_ratio_edit_distance_v2
-from utils import tempel_logger
+from src.stats.utils.s04_final_dataset_statistics_change_utils import get_mappings, get_similarities_dataframe
+from src.tempel_creation.misc.utils import from_bert_to_text, get_ratio_edit_distance_v2
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -99,12 +99,12 @@ if __name__ == "__main__":
                 logger.info('processing %s' % curr_subset_path)
                 for curr_line in tqdm(open(curr_subset_path)):
                     curr_line_json = json.loads(curr_line)
-                    context_right_bert_tokenized = curr_line_json['context_right_bert_tokenized']
-                    context_left_bert_tokenized = curr_line_json['context_left_bert_tokenized']
+                    context_right_bert_tokenized = curr_line_json['context_right_bert']
+                    context_left_bert_tokenized = curr_line_json['context_left_bert']
                     context_right = from_bert_to_text(context_right_bert_tokenized).strip()
                     context_left = from_bert_to_text(context_left_bert_tokenized).strip()
 
-                    target_wikidata_qid = curr_line_json['target_wikidata_qid']
+                    target_wikidata_qid = curr_line_json['target_qid']
                     if target_wikidata_qid not in shared_qid_to_cut_to_mentions_to_tokens:
                         shared_qid_to_cut_to_mentions_to_tokens[target_wikidata_qid] = dict()
                         shared_qid_to_cut_to_subset_to_mentions_to_tokens[target_wikidata_qid] = dict()

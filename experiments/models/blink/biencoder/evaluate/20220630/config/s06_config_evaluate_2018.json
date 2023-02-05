@@ -1,0 +1,6 @@
+{
+  "test_file": "2018-01-01T00:00:00Z_test.jsonl",
+  "cand_faiss_path": "models/blink/biencoder/encode/20220630/output/faiss/2018/",
+  "output_dir_predictions": "models/blink/biencoder/evaluate/20220630/output/predictions/2018/",
+  "path_to_model": "models/blink/biencoder/train/train_bi_20220630/output/models_ep_9_only/2018/model_epoch_09.bin"
+}

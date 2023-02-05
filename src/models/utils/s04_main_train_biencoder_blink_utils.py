@@ -13,10 +13,10 @@ from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
 from tqdm import tqdm, trange
 
-from models.biencoder.biencoder_v2_parallelizable import BiEncoderRankerV2
-from models.utils.optimizer import get_bert_optimizer
-from models.utils.utils import accuracy, write_to_file, save_model
-from utils import tempel_logger
+from src.models.biencoder.biencoder_v2_parallelizable import BiEncoderRankerV2
+from src.models.utils.optimizer import get_bert_optimizer
+from src.models.utils.utils import accuracy, write_to_file, save_model
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

@@ -18,11 +18,11 @@ import psutil
 import torch
 from tqdm import tqdm
 
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from tempel_creation.misc.s03_final_dataset_creator_utils import item_generator, apply_filters, put_mention_in_cluster, \
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.tempel_creation.misc.s03_final_dataset_creator_utils import item_generator, apply_filters, put_mention_in_cluster, \
     get_evenly_distributed_mentions_all, read_from_input_file, process_line_input_file_parallel, write_to_output_file, \
     display
-from utils import tempel_logger
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -183,10 +183,10 @@ if __name__ == '__main__':
             # columns df_prior_stats_filtered:
             #
             filtered_targets_w_nr_inlinks: pd.DataFrame = df_prior_stats_filtered[
-                ['target_wikidata_qid', 'nr_links_mention_per_entity']] \
-                .groupby('target_wikidata_qid').agg({'nr_links_mention_per_entity': 'sum'})
+                ['target_qid', 'nr_links_mention_per_entity']] \
+                .groupby('target_qid').agg({'nr_links_mention_per_entity': 'sum'})
 
-            df_distinct_mentions_per_target = df_prior_stats_filtered.groupby('target_wikidata_qid') \
+            df_distinct_mentions_per_target = df_prior_stats_filtered.groupby('target_qid') \
                 .anchor_mention_text.nunique().reset_index()
 
             col_dist_mentions = 'nr_distinct_mentions'
@@ -210,18 +210,18 @@ if __name__ == '__main__':
             logger.info('%s is the dimension of filtered_targets... BEFORE joining with '
                         'df_distinct_mentions_per_target' % str(filtered_targets_w_nr_inlinks.shape))
             filtered_targets_w_nr_inlinks = pd.merge(filtered_targets_w_nr_inlinks, df_distinct_mentions_per_target,
-                                                     on=('target_wikidata_qid',), how='inner')
+                                                     on=('target_qid',), how='inner')
             logger.info('%s is the dimension of filtered_targets... AFTER joining with df_distinct_mentions_per_target'
                         % str(filtered_targets_w_nr_inlinks.shape))
 
             df_target_qid_stats_per_cut[curr_time_cut] = filtered_targets_w_nr_inlinks
 
             if df_common_filtered_target_qids is None:
-                df_common_filtered_target_qids = filtered_targets_w_nr_inlinks[['target_wikidata_qid']].copy()
+                df_common_filtered_target_qids = filtered_targets_w_nr_inlinks[['target_qid']].copy()
             else:
                 df_common_filtered_target_qids = pd.merge(df_common_filtered_target_qids,
-                                                          filtered_targets_w_nr_inlinks[['target_wikidata_qid']],
-                                                          on=('target_wikidata_qid',), how='inner')
+                                                          filtered_targets_w_nr_inlinks[['target_qid']],
+                                                          on=('target_qid',), how='inner')
 
             logger.info('%s : df_common_filtered_targets.shape after %s ' %
                         (str(df_common_filtered_target_qids.shape), curr_time_cut))
@@ -241,7 +241,7 @@ if __name__ == '__main__':
             curr_year = parsed_curr_date.year
             filtered_anchor_target_stats[curr_time_cut] = pd.merge(filtered_anchor_target_stats[curr_time_cut],
                                                                    df_target_qid_stats_per_cut[curr_time_cut],
-                                                                   on=('target_wikidata_qid',), how='inner')
+                                                                   on=('target_qid',), how='inner')
         end_shared_merge = time.time()
         logger.info('%s minutes for loading for performing shared merge to getshared entities across all the cuts' %
                     ((end_shared_merge - start_shared_merge) / 60))
@@ -276,7 +276,7 @@ if __name__ == '__main__':
                         continue
                     df_shared_target_qids_not_processed = df_shared_target_qids_not_processed[
                         df_shared_target_qids_not_processed.apply
-                        (lambda x: x['target_wikidata_qid'] not in
+                        (lambda x: x['target_qid'] not in
                                    already_processed_target_qids_per_category[curr_cat], axis=1)]
 
                 logger.info('%s: df_common_filtered_targets.shape VS. %s: '
@@ -286,19 +286,19 @@ if __name__ == '__main__':
                 #### END first filters out the target entities that were already processed in other subset or category
 
                 df_entities_to_process_w_mentions = pd.merge(
-                    df_shared_target_qids_not_processed[['target_wikidata_qid']],
+                    df_shared_target_qids_not_processed[['target_qid']],
                     df_anchor_and_target_stats_across_cuts,
-                    on=('target_wikidata_qid',), how='inner')
+                    on=('target_qid',), how='inner')
 
                 # TODO - check if this sort_values is really necessary
                 # creates groups of target pages, each of which is sorted by number of mentions:
                 # I guess nr_links_mention_per_entity should give less popular mentions first for a particular entity
                 #
                 df_entities_to_process_w_mentions = df_entities_to_process_w_mentions.sort_values(
-                    ['target_wikidata_qid', 'filtered_date', 'nr_links_mention_per_entity'],
+                    ['target_qid', 'filtered_date', 'nr_links_mention_per_entity'],
                     ascending=[True, True, True])
 
-                groups = [df for _, df in df_entities_to_process_w_mentions.groupby(by=['target_wikidata_qid'])]
+                groups = [df for _, df in df_entities_to_process_w_mentions.groupby(by=['target_qid'])]
                 random.shuffle(groups)
                 #
                 df_entities_to_process_w_mentions = pd.concat(groups).reset_index(drop=True)
@@ -324,13 +324,13 @@ if __name__ == '__main__':
                     df_entities_to_process_w_mentions.at[curr_tuple.Index, 'subset_name'] = assigned_subset
 
                 df_nr_distinct_subsets = df_entities_to_process_w_mentions \
-                    .groupby(['target_wikidata_qid', 'filtered_date']).subset_name.nunique().reset_index()
+                    .groupby(['target_qid', 'filtered_date']).subset_name.nunique().reset_index()
                 df_nr_distinct_subsets.rename(columns={'subset_name': 'nr_distinct_subsets'}, inplace=True)
 
                 ####### BEGIN WIP min nr distinct subsets ACROSS TARGET AND CUT
                 # TODO - here min nr distinct subsets across target and cut!
                 df_min_nr_distinct_subsets = df_nr_distinct_subsets \
-                    .groupby(['target_wikidata_qid']) \
+                    .groupby(['target_qid']) \
                     .nr_distinct_subsets.min().reset_index()
                 ####### END WIP
                 #
@@ -338,16 +338,16 @@ if __name__ == '__main__':
                             'nr_distinct_subsets  for SHARED' % str(df_entities_to_process_w_mentions.shape))
                 df_min_nr_distinct_subsets = df_min_nr_distinct_subsets[
                     df_min_nr_distinct_subsets['nr_distinct_subsets'] == len(all_subset_names)]
-                df_min_nr_distinct_subsets = df_min_nr_distinct_subsets[['target_wikidata_qid']].drop_duplicates()
+                df_min_nr_distinct_subsets = df_min_nr_distinct_subsets[['target_qid']].drop_duplicates()
                 df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions,
-                                                             df_min_nr_distinct_subsets, on=('target_wikidata_qid',),
+                                                             df_min_nr_distinct_subsets, on=('target_qid',),
                                                              how='inner')
                 logger.info('%s the df_entities_to_process_w_mentions.shape AFTER applying filter on '
                             'nr_distinct_subsets  for SHARED' % str(df_entities_to_process_w_mentions.shape))
                 # step 02 - similarly to step 01 calculate min_nr_mentions for each of the subsets, across the cuts
                 # this will allow to assign a particular target_wikidata_qid to a specific bucket
                 # at this point the columns of df_entities_to_process_w_mentions are:
-                # Index(['target_wikidata_qid', 'anchor_mention_text',
+                # Index(['target_qid', 'anchor_mention_text',
                 #        'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
                 #        'count_mentions', 'nr_links_mention_per_entity', 'prior',
                 #        'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -357,26 +357,26 @@ if __name__ == '__main__':
                 #       dtype='object')
 
                 df_nr_mentions_per_subset_per_cut = df_entities_to_process_w_mentions \
-                    .groupby(['target_wikidata_qid', 'filtered_date', 'subset_name']) \
+                    .groupby(['target_qid', 'filtered_date', 'subset_name']) \
                     .nr_links_mention_per_entity.sum().reset_index()
                 df_nr_mentions_per_subset_per_cut.rename(
                     columns={'nr_links_mention_per_entity': 'nr_links_per_cut_per_sset'}, inplace=True)
                 df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions,
                                                              df_nr_mentions_per_subset_per_cut,
-                                                             on=('target_wikidata_qid', 'filtered_date', 'subset_name'),
+                                                             on=('target_qid', 'filtered_date', 'subset_name'),
                                                              how='inner')
                 df_min_nr_links_per_subset = df_nr_mentions_per_subset_per_cut \
-                    .groupby(['target_wikidata_qid', 'subset_name']) \
+                    .groupby(['target_qid', 'subset_name']) \
                     .nr_links_per_cut_per_sset.min().reset_index()
                 df_min_nr_links_per_subset.rename(
                     columns={'nr_links_per_cut_per_sset': 'min_nr_links_per_subset'}, inplace=True)
                 df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions,
                                                              df_min_nr_links_per_subset,
-                                                             on=('target_wikidata_qid', 'subset_name'),
+                                                             on=('target_qid', 'subset_name'),
                                                              how='inner')
                 # at this point the columns of df_entities_to_process_w_mentions are:
                 #
-                # Index(['target_wikidata_qid', 'anchor_mention_text',
+                # Index(['target_qid', 'anchor_mention_text',
                 #        'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
                 #        'count_mentions', 'nr_links_mention_per_entity', 'prior',
                 #        'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -395,14 +395,14 @@ if __name__ == '__main__':
                 # for each of the target wikidata qid. Later can be extended to calculate min_nr_distinct_mentions
                 # as required above.
                 # =========
-                df_dist_men = df_entities_to_process_w_mentions.groupby(['target_wikidata_qid', 'filtered_date',
+                df_dist_men = df_entities_to_process_w_mentions.groupby(['target_qid', 'filtered_date',
                                                                          'subset_name']) \
                     .anchor_mention_text.nunique().reset_index()
                 col_dist_mentions = 'nr_dist_men_per_cut_per_sset'
                 df_dist_men.rename(columns={'anchor_mention_text': col_dist_mentions}, inplace=True)
 
                 df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions, df_dist_men,
-                                                             on=('target_wikidata_qid', 'filtered_date',
+                                                             on=('target_qid', 'filtered_date',
                                                                  'subset_name'),
                                                              how='inner')
 
@@ -413,7 +413,7 @@ if __name__ == '__main__':
 
                 df_entities_to_process_w_mentions = pd.merge(left=df_entities_to_process_w_mentions,
                                                              right=df_shared_target_qids_not_processed,
-                                                             on='target_wikidata_qid', how='inner')
+                                                             on='target_qid', how='inner')
 
                 cols_to_select = df_shared_target_qids_not_processed.columns.values.tolist()
                 df_shared_target_qids_not_processed = df_entities_to_process_w_mentions[cols_to_select] \
@@ -426,19 +426,19 @@ if __name__ == '__main__':
                             str(df_entities_to_process_w_mentions.shape))
                 df_entities_to_process_w_mentions = pd.merge(left=df_entities_to_process_w_mentions,
                                                              right=df_shared_target_qids_not_processed,
-                                                             on='target_wikidata_qid', how='inner')[cols_to_select_men]
+                                                             on='target_qid', how='inner')[cols_to_select_men]
                 logger.info('%s df_entities_to_process_w_mentions.shape AFTER filtering on max_entities '
                             % str(df_entities_to_process_w_mentions.shape))
 
                 logger.info('%s shape df_shared_targets_not_processed' % str(df_shared_target_qids_not_processed.shape))
                 logger.info('nr of distinct entities in df_entities_to_process_w_mentions (shared): %s' %
-                            len(df_entities_to_process_w_mentions['target_wikidata_qid'].unique()))
+                            len(df_entities_to_process_w_mentions['target_qid'].unique()))
 
                 ############################## BEGIN V3 algorithm
                 logger.info('V3 columns of df_entities_to_process_w_mentions: %s' %
                             str(df_entities_to_process_w_mentions.columns))
                 # columns of df_entities_to_process_w_mentions:
-                # Index(['target_wikidata_qid', 'anchor_mention_text',
+                # Index(['target_qid', 'anchor_mention_text',
                 #        'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
                 #        'count_mentions', 'nr_links_mention_per_entity', 'prior',
                 #        'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -453,7 +453,7 @@ if __name__ == '__main__':
                 # # nr links per cut per sset
                 #
                 df_entities_to_proc = df_entities_to_process_w_mentions \
-                    .groupby(['target_wikidata_qid', 'filtered_date', 'subset_name']) \
+                    .groupby(['target_qid', 'filtered_date', 'subset_name']) \
                     .nr_links_per_cut_per_sset.mean().reset_index()
 
                 df_entities_to_process_adjusted = None
@@ -478,7 +478,7 @@ if __name__ == '__main__':
                         ent_mentions_by_subset_by_cut[curr_time_cut] = \
                             ent_mentions_by_subset_by_cut[curr_time_cut] \
                                 .rename(columns={'nr_links_per_cut_per_sset': col_nr_links_name,
-                                                 'target_wikidata_qid': 'target_wikidata_qid_{}'.format(curr_year)})
+                                                 'target_qid': 'target_wikidata_qid_{}'.format(curr_year)})
 
                         # sorts by nr links, doesn't matter if ascending is True or False
                         ent_mentions_by_subset_by_cut[curr_time_cut] = \
@@ -573,7 +573,7 @@ if __name__ == '__main__':
                         df_to_cat = df_joined.loc[:, [col_target_wdata_qid, col_nr_links_name]]
                         df_to_cat.loc[:, 'subset_name'] = curr_subset_name
                         df_to_cat.loc[:, 'filtered_date'] = curr_time_cut
-                        df_to_cat = df_to_cat.rename(columns={col_target_wdata_qid: 'target_wikidata_qid',
+                        df_to_cat = df_to_cat.rename(columns={col_target_wdata_qid: 'target_qid',
                                                               col_nr_links_name: 'nr_links_per_cut_per_sset'})
                         # check that the nr of mentions to extract equals to the nr of mentions in the cut with less
                         # mentions
@@ -590,14 +590,14 @@ if __name__ == '__main__':
                 assert (df_entities_to_process_adjusted['nr_mentions_to_extract_per_cut_per_sset'] > 0).all()
 
                 df_entities_to_proc = pd.merge(
-                    left=df_entities_to_proc[['target_wikidata_qid', 'subset_name', 'filtered_date']],
+                    left=df_entities_to_proc[['target_qid', 'subset_name', 'filtered_date']],
                     right=df_entities_to_process_adjusted,
-                    on=['target_wikidata_qid', 'subset_name', 'filtered_date'], how='inner')
+                    on=['target_qid', 'subset_name', 'filtered_date'], how='inner')
 
                 df_entities_to_process_w_mentions = pd.merge(
                     left=df_entities_to_proc,
                     right=df_entities_to_process_w_mentions,
-                    on=['target_wikidata_qid', 'subset_name', 'filtered_date'], how='inner')
+                    on=['target_qid', 'subset_name', 'filtered_date'], how='inner')
 
                 # the nr of mentions to extract has not to be more than the actual nr of mentions available
                 assert ((df_entities_to_process_w_mentions['nr_links_per_cut_per_sset'] -
@@ -630,7 +630,7 @@ if __name__ == '__main__':
                     start = time.time()
                     df_prior_w_page_info = pd.merge(filtered_anchor_target_stats[curr_time_cut],
                                                     df_page_infos_per_cut[curr_time_cut],
-                                                    left_on=('target_wikidata_qid',),
+                                                    left_on=('target_qid',),
                                                     right_on=('wikidata_qid',), how='inner')
 
                     if debug:
@@ -639,7 +639,7 @@ if __name__ == '__main__':
                         already_added_wikidata_qids = set()
                         for idx_row, curr_row in filtered_anchor_target_stats[curr_time_cut].iterrows():
                             val_page_id = curr_row['target_page_id']
-                            val_wikidata_qid = curr_row['target_wikidata_qid']
+                            val_wikidata_qid = curr_row['target_qid']
                             if val_wikidata_qid in already_added_wikidata_qids:
                                 continue
                             val_wikipedia_title = curr_row['target_title_2022']
@@ -664,7 +664,7 @@ if __name__ == '__main__':
                         # and now repeats the merge with the extra data
                         df_prior_w_page_info = pd.merge(filtered_anchor_target_stats[curr_time_cut],
                                                         df_page_info,
-                                                        left_on=('target_wikidata_qid',),
+                                                        left_on=('target_qid',),
                                                         right_on=('wikidata_qid',), how='inner')
 
                     end = time.time()
@@ -687,7 +687,7 @@ if __name__ == '__main__':
 
                     start = time.time()
 
-                    df_entities_to_process_w_mentions = df_prior_w_page_info_new[['target_wikidata_qid']] \
+                    df_entities_to_process_w_mentions = df_prior_w_page_info_new[['target_qid']] \
                         .drop_duplicates()
 
                     #### BEGIN first filters out the target entities that were already processed in other subset or category
@@ -698,7 +698,7 @@ if __name__ == '__main__':
                             continue
                         df_entities_to_process_w_mentions = df_entities_to_process_w_mentions[
                             df_entities_to_process_w_mentions.apply
-                            (lambda x: x['target_wikidata_qid'] not in
+                            (lambda x: x['target_qid'] not in
                                        already_processed_target_qids_per_category[curr_cat], axis=1)]
 
                     logger.info('%s df_entities_to_process_w_mentions.shape AFTER cleaning already processed' %
@@ -707,11 +707,11 @@ if __name__ == '__main__':
 
                     df_entities_to_process_w_mentions = pd.merge(df_prior_w_page_info_new,
                                                                  df_entities_to_process_w_mentions,
-                                                                 on=('target_wikidata_qid',),
+                                                                 on=('target_qid',),
                                                                  how='inner')
 
                     # df_entities_to_process_w_mentions.columns:
-                    # Index(['anchor_mention_text', 'target_wikidata_qid',
+                    # Index(['anchor_mention_text', 'target_qid',
                     #        'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
                     #        'count_mentions', 'nr_links_mention_per_entity', 'prior',
                     #        'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -725,10 +725,10 @@ if __name__ == '__main__':
                     df_entities_to_process_w_mentions = df_entities_to_process_w_mentions.sample(frac=1) \
                         .reset_index(drop=True)
                     df_entities_to_process_w_mentions = df_entities_to_process_w_mentions.sort_values(
-                        ['target_wikidata_qid'],
+                        ['target_qid'],
                         ascending=[True])
 
-                    groups = [df for _, df in df_entities_to_process_w_mentions.groupby('target_wikidata_qid')]
+                    groups = [df for _, df in df_entities_to_process_w_mentions.groupby('target_qid')]
                     random.shuffle(groups)
 
                     #
@@ -762,7 +762,7 @@ if __name__ == '__main__':
                     # for new entities it is not needed (no shared entities with previous cuts)
                     # df_entities_to_process_w_mentions.shape --> (2598, 29)
                     df_nr_distinct_subsets = df_entities_to_process_w_mentions \
-                        .groupby(['target_wikidata_qid']).subset_name.nunique().reset_index()
+                        .groupby(['target_qid']).subset_name.nunique().reset_index()
 
                     df_nr_distinct_subsets.rename(columns={'subset_name': 'nr_distinct_subsets'}, inplace=True)
 
@@ -773,14 +773,14 @@ if __name__ == '__main__':
                     logger.info('%s the shape AFTER applying filter on nr_distinct_subsets' %
                                 str(df_nr_distinct_subsets.shape))
                     # df_nr_distinct_subsets.shape --> (534, 2)
-                    df_nr_distinct_subsets = df_nr_distinct_subsets[['target_wikidata_qid']].drop_duplicates()
+                    df_nr_distinct_subsets = df_nr_distinct_subsets[['target_qid']].drop_duplicates()
                     # after .drop_duplicates --> shape --> (534, 1) |||
-                    # df_entities_to_process_w_mentions[['target_wikidata_qid']].drop_duplicates().shape --> 587,1 ||
+                    # df_entities_to_process_w_mentions[['target_qid']].drop_duplicates().shape --> 587,1 ||
                     # in other words we lose (587-534) target entities;
                     # those can be put only in one subset (ex: in test; or validation and test).
                     df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions,
                                                                  df_nr_distinct_subsets,
-                                                                 on=('target_wikidata_qid',),
+                                                                 on=('target_qid',),
                                                                  how='inner')
                     logger.info('%s the df_entities_to_process_w_mentions.shape AFTER applying filter on '
                                 'nr_distinct_subsets for NEW' % str(df_entities_to_process_w_mentions.shape))
@@ -789,25 +789,25 @@ if __name__ == '__main__':
                     # for new entities it is not needed (no shared entities with previous cuts)
                     #
                     df_nr_mentions_per_subset = df_entities_to_process_w_mentions \
-                        .groupby(['target_wikidata_qid', 'subset_name']) \
+                        .groupby(['target_qid', 'subset_name']) \
                         .nr_links_mention_per_entity.sum().reset_index()
                     df_nr_mentions_per_subset.rename(
                         columns={'nr_links_mention_per_entity': 'nr_links_per_subset'}, inplace=True)
                     df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions,
                                                                  df_nr_mentions_per_subset,
-                                                                 on=('target_wikidata_qid', 'subset_name'),
+                                                                 on=('target_qid', 'subset_name'),
                                                                  how='inner')
                     #
                     # Similar as in "random", but without the grouping on the cut ("filtered_date"), since
                     # for new entities it is not needed (no shared entities with previous cuts).
                     #
-                    df_dist_men = df_entities_to_process_w_mentions.groupby(['target_wikidata_qid', 'subset_name']) \
+                    df_dist_men = df_entities_to_process_w_mentions.groupby(['target_qid', 'subset_name']) \
                         .anchor_mention_text.nunique().reset_index()
                     col_dist_mentions = 'nr_dist_men_per_sset'
                     df_dist_men.rename(columns={'anchor_mention_text': col_dist_mentions}, inplace=True)
 
                     df_entities_to_process_w_mentions = pd.merge(df_entities_to_process_w_mentions, df_dist_men,
-                                                                 on=('target_wikidata_qid', 'subset_name'),
+                                                                 on=('target_qid', 'subset_name'),
                                                                  how='inner')
                     #
                     # Inside itertuples, assign maximum possible bucket limited by the min_nr_mentions for each
@@ -828,7 +828,7 @@ if __name__ == '__main__':
                 ### BEGIN V3 - same number of entities and mentions across cuts
                 #
                 # df_entities_to_process_w_mentions_all_cuts.columns:
-                #       Index(['anchor_mention_text', 'target_wikidata_qid',
+                #       Index(['anchor_mention_text', 'target_qid',
                 #           'target_wikipedia_title_orig', 'target_page_id', 'filtered_date',
                 #           'count_mentions', 'nr_links_mention_per_entity', 'prior',
                 #           'target_title_2022', 'prior_rank', 'target_wikipedia_title_orig_lower',
@@ -847,8 +847,8 @@ if __name__ == '__main__':
 
                 #
                 df_entities_to_proc = df_entities_to_process_w_mentions_all_cuts.drop_duplicates(
-                    subset=['target_wikidata_qid', 'filtered_date']
-                ).loc[:, ['target_wikidata_qid', 'filtered_date']]
+                    subset=['target_qid', 'filtered_date']
+                ).loc[:, ['target_qid', 'filtered_date']]
                 #
                 df_entities_to_process_adjusted = None
 
@@ -858,7 +858,7 @@ if __name__ == '__main__':
 
                     df_entities_to_process_cut = \
                         df_entities_to_proc.loc[(df_entities_to_proc['filtered_date'] == curr_time_cut),
-                                                ['target_wikidata_qid', 'filtered_date']]
+                                                ['target_qid', 'filtered_date']]
                     entities_to_proc_per_cut[curr_time_cut] = df_entities_to_process_cut
 
                     if min_nr_entities_cut is None:
@@ -882,11 +882,11 @@ if __name__ == '__main__':
                 # concatenates everything
                 df_entities_to_proc = pd.concat(list(entities_to_proc_per_cut.values()))
                 df_entities_to_process = df_entities_to_process_w_mentions_all_cuts \
-                    .groupby(['target_wikidata_qid', 'filtered_date', 'subset_name']) \
+                    .groupby(['target_qid', 'filtered_date', 'subset_name']) \
                     .nr_links_per_subset.mean().reset_index()
                 # now merges directly with entities_to_proc_per_cut to reduce the nr of entities (downsampled)
                 df_entities_to_process = pd.merge(left=df_entities_to_process, right=df_entities_to_proc,
-                                                  on=['target_wikidata_qid', 'filtered_date'], how='inner')
+                                                  on=['target_qid', 'filtered_date'], how='inner')
 
                 df_entities_to_process['nr_links_per_subset'] = \
                     df_entities_to_process['nr_links_per_subset'].astype(int)
@@ -911,7 +911,7 @@ if __name__ == '__main__':
                         entities_to_process_per_cut[curr_time_cut] = \
                             entities_to_process_per_cut[curr_time_cut] \
                                 .rename(columns={'nr_links_per_subset': col_nr_links_name,
-                                                 'target_wikidata_qid': 'target_wikidata_qid_{}'.format(curr_year)})
+                                                 'target_qid': 'target_wikidata_qid_{}'.format(curr_year)})
                         entities_to_process_per_cut[curr_time_cut] = \
                             entities_to_process_per_cut[curr_time_cut]. \
                                 sort_values([col_nr_links_name], ascending=[False])
@@ -1000,7 +1000,7 @@ if __name__ == '__main__':
                         df_to_cat = df_joined.loc[:, [col_target_wdata_qid, col_nr_links_name]]
                         df_to_cat.loc[:, 'subset_name'] = curr_subset_name
                         df_to_cat.loc[:, 'filtered_date'] = curr_time_cut
-                        df_to_cat = df_to_cat.rename(columns={col_target_wdata_qid: 'target_wikidata_qid',
+                        df_to_cat = df_to_cat.rename(columns={col_target_wdata_qid: 'target_qid',
                                                               col_nr_links_name: 'nr_links_per_subset'})
                         logger.info('new_entities, nr of mentions to extract for sset %s for curr_time_cut %s: %s' %
                                     (curr_subset_name, curr_time_cut, df_to_cat['nr_links_per_subset'].sum()))
@@ -1019,13 +1019,13 @@ if __name__ == '__main__':
                 assert (df_entities_to_process_adjusted['nr_mentions_to_extract_per_subset'] > 0).all()
 
                 df_entities_to_process = pd.merge(
-                    left=df_entities_to_process[['target_wikidata_qid', 'filtered_date', 'subset_name']],
+                    left=df_entities_to_process[['target_qid', 'filtered_date', 'subset_name']],
                     right=df_entities_to_process_adjusted,
-                    on=['target_wikidata_qid', 'subset_name', 'filtered_date'])
+                    on=['target_qid', 'subset_name', 'filtered_date'])
 
                 df_entities_to_process_w_mentions_all_cuts = pd.merge(left=df_entities_to_process,
                                                                       right=df_entities_to_process_w_mentions_all_cuts,
-                                                                      on=['target_wikidata_qid', 'subset_name',
+                                                                      on=['target_qid', 'subset_name',
                                                                           'filtered_date'])
                 #
                 # the nr of mentions to extract has not to be more than the actual nr of mentions available
@@ -1173,7 +1173,7 @@ if __name__ == '__main__':
                 for curr_anchor_mention in tqdm(open(path_to_anchor_mentions, 'rt')):
                     curr_json_anchor_mention = json.loads(curr_anchor_mention)
 
-                    target_wikidata_qid = curr_json_anchor_mention['target_wikidata_qid']
+                    target_wikidata_qid = curr_json_anchor_mention['target_qid']
                     target_details = loaded_target_entities[curr_time_cut][target_wikidata_qid]
 
                     target_title_2022_source2 = target_details['target_title_2022_source2']
@@ -1196,7 +1196,7 @@ if __name__ == '__main__':
                         logger.warning('!!WARNING!!, target_orig_title mismatch: %s' % curr_json_anchor_mention)
                     if target_title_2022_source2 != curr_json_anchor_mention['target_title_2022']:
                         logger.warning('!!WARNING!!, target_title_2022 mismatch: %s' % curr_json_anchor_mention)
-                    if target_wikidata_qid_source2 != curr_json_anchor_mention['target_wikidata_qid']:
+                    if target_wikidata_qid_source2 != curr_json_anchor_mention['target_qid']:
                         logger.warning('!!WARNING!!, target_wikidata_qid mismatch: %s' % curr_json_anchor_mention)
                     if target_page_id_source2 != curr_json_anchor_mention['target_page_id']:
                         logger.warning('!!WARNING!!, target_page_id mismatch: %s' % curr_json_anchor_mention)
@@ -1207,23 +1207,23 @@ if __name__ == '__main__':
                     del curr_json_anchor_mention_tokenized['context_right']
                     del curr_json_anchor_mention_tokenized['mention']
 
-                    del curr_json_anchor_mention_not_tokenized['context_right_bert_tokenized']
-                    del curr_json_anchor_mention_not_tokenized['context_left_bert_tokenized']
-                    del curr_json_anchor_mention_not_tokenized['mention_bert_tokenized']
+                    del curr_json_anchor_mention_not_tokenized['context_right_bert']
+                    del curr_json_anchor_mention_not_tokenized['context_left_bert']
+                    del curr_json_anchor_mention_not_tokenized['mention_bert']
 
-                    curr_json_anchor_mention_tokenized['target_bert_tokenized'] = target_details['label_bert_tokenized']
+                    curr_json_anchor_mention_tokenized['target_bert'] = target_details['label_bert_tokenized']
 
-                    curr_json_anchor_mention_tokenized['target_title_bert_tokenized'] = target_details[
+                    curr_json_anchor_mention_tokenized['target_title_bert'] = target_details[
                         'label_title_bert_tokenized']
 
                     # limits in the nr of tokens for tokenized, if not gets too big
                     len_mention_context = int(max_len_context_tokenized / 2)
-                    curr_json_anchor_mention_tokenized['context_right_bert_tokenized'] = \
-                        curr_json_anchor_mention_tokenized['context_right_bert_tokenized'][:len_mention_context]
-                    curr_json_anchor_mention_tokenized['context_left_bert_tokenized'] = \
-                        curr_json_anchor_mention_tokenized['context_left_bert_tokenized'][-len_mention_context:]
-                    curr_json_anchor_mention_tokenized['target_bert_tokenized'] = \
-                        curr_json_anchor_mention_tokenized['target_bert_tokenized'][:max_len_context_tokenized]
+                    curr_json_anchor_mention_tokenized['context_right_bert'] = \
+                        curr_json_anchor_mention_tokenized['context_right_bert'][:len_mention_context]
+                    curr_json_anchor_mention_tokenized['context_left_bert'] = \
+                        curr_json_anchor_mention_tokenized['context_left_bert'][-len_mention_context:]
+                    curr_json_anchor_mention_tokenized['target_bert_'] = \
+                        curr_json_anchor_mention_tokenized['target_bert'][:max_len_context_tokenized]
                     #
 
                     curr_json_anchor_mention_not_tokenized['target_text'] = target_details['target_text']

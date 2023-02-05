@@ -4,10 +4,10 @@ import json
 import logging
 import os
 
-from stats.utils.s04_final_dataset_statistics_utils import print_some_examples_in_md, stat_target_anchor_lengths, \
+from src.stats.utils.s04_final_dataset_statistics_utils import print_some_examples_in_md, stat_target_anchor_lengths, \
     print_latex_subset_distribution_tuples_v3, stat_mentions_per_entity, stat_mentions_per_entity_across_cuts, \
     get_tuples_per_year
-from utils import tempel_logger
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

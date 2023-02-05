@@ -2,10 +2,10 @@
 
 import torch
 
-from models.biencoder.biencoder import to_bert_input, NULL_IDX
-from models.utils.custom_bert import BertModel
-from models.utils.optimizer import get_bert_optimizer
-from models.utils.ranker_base import BertEncoder
+from src.models.biencoder.biencoder import to_bert_input, NULL_IDX
+from src.models.utils.custom_bert import BertModel
+from src.models.utils.optimizer import get_bert_optimizer
+from src.models.utils.ranker_base import BertEncoder
 
 
 def load_biencoder(params):

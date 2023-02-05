@@ -9,18 +9,153 @@ import time
 from datetime import datetime
 from typing import Set
 
-import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from models.biencoder.misc_utils import Stats
-from stats.s07_analyze_results_specific_year_v2 import get_target_filter_type
-from tempel_creation.misc.utils import from_bert_to_text
-from utils import tempel_logger
+from src.models.biencoder.misc_utils import Stats
+from src.stats.s07_analyze_results_specific_year_v2 import get_target_filter_type
+from src.tempel_creation.misc.utils import from_bert_to_text
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
 logger = logging.getLogger(__name__)
+
+
+def process_dataset_tuple(curr_tuple, subset_name):
+    # logger.info(f'the following is the tuple: {curr_tuple}')
+    parsed_tuple = json.loads(curr_tuple)
+    fld_mention = parsed_tuple['mention_bert']
+    fld_mention = from_bert_to_text(fld_mention)
+    fld_subset = parsed_tuple['subset']
+    fld_entity_qid = parsed_tuple['target_qid']
+    # fld_cut = parsed_tuple['filtered_date']
+    fld_cut = parsed_tuple['current_snapshot']
+    parsed_curr_date = datetime.strptime(fld_cut, '%Y-%m-%dT%H:%M:%SZ')
+    fld_cut = parsed_curr_date.year
+
+    fld_target_len = parsed_tuple['target_len']
+    fld_anchor_len = parsed_tuple['anchor_len']
+
+    fld_category = parsed_tuple['category']
+    # fld_target_orig_title = parsed_tuple['target_orig_title']
+    fld_target_orig_title = parsed_tuple['target_title']
+    # just the first 256 bert tokens
+    fld_target_bert_tokenized = parsed_tuple['target_bert'][:256]
+    assert fld_subset == subset_name
+
+    return {'mention': fld_mention, 'subset': fld_subset, 'entity_qid': fld_entity_qid, 'cut': fld_cut,
+            'category': fld_category, 'target_len': fld_target_len, 'anchor_len': fld_anchor_len,
+            'target_orig_title': fld_target_orig_title, 'target_bert': fld_target_bert_tokenized}
+
+
+def get_tuples_per_year(config):
+    # sorted_cuts = list(config['time_cuts'].keys())
+    # sorted_cuts = sorted(sorted_cuts)
+    dataset_path = config['input_dir_dataset']
+    cache_tuples_path = config['cache_tuples_path']
+
+    if not os.path.exists(cache_tuples_path):
+        dirname = os.path.dirname(cache_tuples_path)
+        os.makedirs(dirname, exist_ok=True)
+        train_tuples_per_year = dict()
+        validation_tuples_per_year = dict()
+        test_tuples_per_year = dict()
+
+        for curr_subset in config['evaluation_snapshots']:
+            subset_name = curr_subset['subset_name']
+            for curr_subset_cut in curr_subset['evaluation_snapshots']:
+                curr_cut = curr_subset_cut['timestamp']
+
+                parsed_curr_date = datetime.strptime(curr_cut, '%Y-%m-%dT%H:%M:%SZ')
+                curr_year = str(parsed_curr_date.year)
+
+                train_tuples_per_year[curr_year] = list()
+                validation_tuples_per_year[curr_year] = list()
+                test_tuples_per_year[curr_year] = list()
+                # year_config = config['time_cuts'][curr_year]
+
+                if subset_name == 'train':
+                    train_path = os.path.join(dataset_path, curr_subset_cut['input_file_name'])
+                    logger.info('stat_mentions_per_entity loading %s' % train_path)
+                    for curr_tuple in tqdm(open(train_path)):
+                        curr_tuple = process_dataset_tuple(curr_tuple, 'train')
+                        train_tuples_per_year[curr_year].append(curr_tuple)
+                elif subset_name == 'validation':
+                    validation_path = os.path.join(dataset_path, curr_subset_cut['input_file_name'])
+                    logger.info('stat_mentions_per_entity loading %s' % validation_path)
+                    for curr_tuple in tqdm(open(validation_path)):
+                        curr_tuple = process_dataset_tuple(curr_tuple, 'validation')
+                        validation_tuples_per_year[curr_year].append(curr_tuple)
+                elif subset_name == 'test':
+                    test_path = os.path.join(dataset_path, curr_subset_cut['input_file_name'])
+                    logger.info('stat_mentions_per_entity loading %s' % test_path)
+                    for curr_tuple in tqdm(open(test_path)):
+                        curr_tuple = process_dataset_tuple(curr_tuple, 'test')
+                        test_tuples_per_year[curr_year].append(curr_tuple)
+        saved_tuples = {
+            'train_tuples_per_year': train_tuples_per_year,
+            'validation_tuples_per_year': validation_tuples_per_year,
+            'test_tuples_per_year': test_tuples_per_year
+        }
+        pickle.dump(saved_tuples, open(cache_tuples_path, 'wb'))
+    else:
+        saved_tuples = pickle.load(open(cache_tuples_path, 'rb'))
+        # train_tuples_per_year = saved_tuples['train_tuples_per_year']
+        # validation_tuples_per_year = saved_tuples['validation_tuples_per_year']
+        # test_tuples_per_year = saved_tuples['test_tuples_per_year']
+    # return train_tuples_per_year, validation_tuples_per_year, test_tuples_per_year
+    return saved_tuples
+
+
+# def get_tuples_per_year_old(config):
+#     sorted_cuts = list(config['time_cuts'].keys())
+#     sorted_cuts = sorted(sorted_cuts)
+#     dataset_path = config['dataset_path']
+#     cache_tuples_path = config['cache_tuples_path']
+#     if not os.path.exists(cache_tuples_path):
+#         dirname = os.path.dirname(cache_tuples_path)
+#         os.makedirs(dirname, exist_ok=True)
+#         train_tuples_per_year = dict()
+#         validation_tuples_per_year = dict()
+#         test_tuples_per_year = dict()
+#         for curr_cut in sorted_cuts:
+#             parsed_curr_date = datetime.strptime(curr_cut, '%Y-%m-%dT%H:%M:%SZ')
+#             curr_year = str(parsed_curr_date.year)
+#
+#             train_tuples_per_year[curr_year] = list()
+#             validation_tuples_per_year[curr_year] = list()
+#             test_tuples_per_year[curr_year] = list()
+#             year_config = config['time_cuts'][curr_year]
+#             train_path = os.path.join(dataset_path, year_config['train_path'])
+#             validation_path = os.path.join(dataset_path, year_config['validation_path'])
+#             test_path = os.path.join(dataset_path, year_config['test_path'])
+#             logger.info('stat_mentions_per_entity loading %s' % train_path)
+#             for curr_tuple in tqdm(open(train_path)):
+#                 curr_tuple = process_dataset_tuple(curr_tuple, 'train')
+#                 train_tuples_per_year[curr_year].append(curr_tuple)
+#
+#             logger.info('stat_mentions_per_entity loading %s' % validation_path)
+#             for curr_tuple in tqdm(open(validation_path)):
+#                 curr_tuple = process_dataset_tuple(curr_tuple, 'validation')
+#                 validation_tuples_per_year[curr_year].append(curr_tuple)
+#
+#             logger.info('stat_mentions_per_entity loading %s' % test_path)
+#             for curr_tuple in tqdm(open(test_path)):
+#                 curr_tuple = process_dataset_tuple(curr_tuple, 'test')
+#                 test_tuples_per_year[curr_year].append(curr_tuple)
+#         pickle.dump({
+#             'train_tuples_per_year': train_tuples_per_year,
+#             'validation_tuples_per_year': validation_tuples_per_year,
+#             'test_tuples_per_year': test_tuples_per_year
+#         }
+#             , open(cache_tuples_path, 'wb'))
+#     else:
+#         saved_tuples = pickle.load(open(cache_tuples_path, 'rb'))
+#         train_tuples_per_year = saved_tuples['train_tuples_per_year']
+#         validation_tuples_per_year = saved_tuples['validation_tuples_per_year']
+#         test_tuples_per_year = saved_tuples['test_tuples_per_year']
+#     return train_tuples_per_year, validation_tuples_per_year, test_tuples_per_year
 
 
 def evaluate_predictions(predictions_path, config, stats, subset_name, curr_subset_timestamp,
@@ -54,6 +189,9 @@ def evaluate_predictions(predictions_path, config, stats, subset_name, curr_subs
 
             # if this assert is correct, then we are fine to take the data from
             #   saved_tuples
+            # import pdb
+            # pdb.set_trace()
+
             assert saved_tuples['{}_tuples_per_year'.format(subset_name)][curr_subset_year][idx_mention_pred] \
                        ['entity_qid'] == parsed_line['gold_label_doc_id']
 
@@ -67,7 +205,7 @@ def evaluate_predictions(predictions_path, config, stats, subset_name, curr_subs
             target_orig_title = saved_tuples['{}_tuples_per_year'.format(subset_name)] \
                 [curr_subset_year][idx_mention_pred]['target_orig_title']
             target_bert_tokenized = saved_tuples['{}_tuples_per_year'.format(subset_name)] \
-                [curr_subset_year][idx_mention_pred]['target_bert_tokenized']
+                [curr_subset_year][idx_mention_pred]['target_bert']
 
             if wikidata_qid_to_include is not None and \
                     (parsed_line['gold_label_doc_id'] not in wikidata_qid_to_include):
@@ -232,9 +370,9 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
     max_intensity = 75
     range_intensity = max_intensity - min_intensity
 
-    cuts_to_show = config['cuts_to_show']
+    finetune_snapshots = config['finetune_snapshots']
 
-    fine_tune_cuts = config['fine_tune_cuts']
+    finetune_snapshots = config['finetune_snapshots']
     top_k_list = config['top_k_list']
 
     ks_to_iterate = top_k_list
@@ -246,8 +384,8 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
         to_ret_str = ''
 
         cuts_with_results = set()
-        for curr_fine_tune_cut in fine_tune_cuts:
-            curr_timestamp = curr_fine_tune_cut['timestamp']
+        for curr_finetune_snapshot in finetune_snapshots:
+            curr_timestamp = curr_finetune_snapshot['timestamp']
             cuts_with_results.add(curr_timestamp)
 
         max_acc_per_fine_tune_cut = dict()
@@ -260,30 +398,34 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
             central_accuracies_per_fine_tune_cut[curr_category_to_evaluate] = dict()
             max_acc_per_fine_tune_cut[curr_category_to_evaluate] = dict()
             min_acc_per_fine_tune_cut[curr_category_to_evaluate] = dict()
-            for curr_fine_tune_cut in cuts_to_show:
-                max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut] = 0.0
-                min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut] = 100.0
-                for curr_predicted_cut in cuts_to_show:
+            for curr_finetune_snapshot in finetune_snapshots:
+                curr_finetune_timestamp = curr_finetune_snapshot['timestamp']
+                max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp] = 0.0
+                min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp] = 100.0
+                pred_cuts = [es for es in config['evaluation_snapshots'] if es['subset_name'] == subset_name][0]
+                for curr_subset_snapshot in pred_cuts['subset_snapshots']:
+                    curr_subset_timestamp = curr_subset_snapshot['timestamp']
                     #
-                    if subset_name in results[curr_fine_tune_cut]:
-                        curr_res = results[curr_fine_tune_cut][subset_name][curr_predicted_cut][model_name][
+                    if subset_name in results[curr_finetune_timestamp]:
+                        curr_res = results[curr_finetune_timestamp][subset_name][curr_subset_timestamp][model_name][
                             curr_category_to_evaluate]
                         curr_res = curr_res.output_json()
                         curr_acc = curr_res['acc@{}'.format(curr_k)]
                     else:
                         curr_acc = 0.0
-                    max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut] = max(curr_acc,
-                                                                                                   max_acc_per_fine_tune_cut[
-                                                                                                       curr_category_to_evaluate][
-                                                                                                       curr_fine_tune_cut])
-                    min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut] = min(curr_acc,
-                                                                                                   min_acc_per_fine_tune_cut[
-                                                                                                       curr_category_to_evaluate][
-                                                                                                       curr_fine_tune_cut])
+                    max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp] = \
+                        max(curr_acc
+                            , max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp]
+                            )
+                    min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp] = \
+                        min(curr_acc
+                            , min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp]
+                            )
                     min_accuracy = min(curr_acc, min_accuracy)
                     max_accuracy = max(curr_acc, max_accuracy)
-                    if curr_fine_tune_cut == curr_predicted_cut:
-                        central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut] = curr_acc
+                    if curr_finetune_timestamp == curr_subset_timestamp:
+                        central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                            curr_finetune_timestamp] = curr_acc
 
         to_ret_str += '\\begin{table}[t] \n'
         to_ret_str += '\\caption{Accuracy@%s for \\emph{continual} (top) and \\emph{new} (bottom) entities. ' \
@@ -294,7 +436,7 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
         to_ret_str += '\\label{tab:general_table_shared_k_in_%s} \n' % curr_k
         to_ret_str += '\\centering \n'
         to_ret_str += '\\resizebox{\columnwidth}{!} \n'
-        to_ret_str += '{\\begin{tabular}{c ' + 'c' * len(cuts_to_show) + '} \n'
+        to_ret_str += '{\\begin{tabular}{c ' + 'c' * len(finetune_snapshots) + '} \n'
         to_ret_str += '\t \\toprule \n'
 
         for idx_category, curr_category_to_evaluate in enumerate(categories_to_evaluate):
@@ -309,51 +451,72 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
                 to_ret_str += '\t \\midrule \n'
 
             to_ret_str += '\t \\backslashbox{\\textbf{Train}}{\\textbf{Test}}'
-            for curr_cut in cuts_to_show:
-                parsed_curr_date = datetime.strptime(curr_cut, '%Y-%m-%dT%H:%M:%SZ')
+            for curr_snapshot in finetune_snapshots:
+                curr_snapshot_timestamp = curr_snapshot['timestamp']
+                parsed_curr_date = datetime.strptime(curr_snapshot_timestamp, '%Y-%m-%dT%H:%M:%SZ')
                 curr_year = parsed_curr_date.year
                 # '& 2013 & 2014 & 2015 & 2016 & 2017 & 2018 & 2019 & 2020  & 2021  & 2022 \\'
                 to_ret_str += '& {} '.format(curr_year)
             to_ret_str += '\\\\ \n'
             to_ret_str += '\t\\midrule \n'
-            for curr_fine_tune_cut in cuts_to_show:
-                parsed_curr_date = datetime.strptime(curr_fine_tune_cut, '%Y-%m-%dT%H:%M:%SZ')
+            for curr_finetune_snapshot in finetune_snapshots:
+                curr_finetune_timestamp = curr_finetune_snapshot['timestamp']
+                parsed_curr_date = datetime.strptime(curr_finetune_timestamp, '%Y-%m-%dT%H:%M:%SZ')
                 curr_year = parsed_curr_date.year
                 to_ret_str += '%s ' % curr_year
-                if curr_fine_tune_cut in cuts_with_results:
-                    max_acc_pf = max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut]
-                    min_acc_pf = min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_fine_tune_cut]
-                    for curr_predicted_cut in cuts_to_show:
-                        curr_res = results[curr_fine_tune_cut][subset_name][curr_predicted_cut][model_name][
+                if curr_finetune_timestamp in cuts_with_results:
+                    max_acc_pf = max_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp]
+                    min_acc_pf = min_acc_per_fine_tune_cut[curr_category_to_evaluate][curr_finetune_timestamp]
+                    subset_snapshots = \
+                        [es for es in config['evaluation_snapshots'] if es['subset_name'] == subset_name][0]
+                    # for curr_subset_snapshot in finetune_snapshots:
+                    for curr_subset_snapshot in subset_snapshots['subset_snapshots']:
+                        curr_subset_timestamp = curr_subset_snapshot['timestamp']
+                        curr_res = results[curr_finetune_timestamp][subset_name][curr_subset_timestamp][model_name][
                             curr_category_to_evaluate]
                         curr_res = curr_res.output_json()
-                        if curr_fine_tune_cut == curr_predicted_cut:
+                        if curr_finetune_timestamp == curr_subset_timestamp:
                             to_ret_str += (' & %.3f' % curr_res['acc@{}'.format(curr_k)])
                         else:
                             curr_acc = curr_res['acc@{}'.format(curr_k)]
-                            max_delta = central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
-                                            curr_fine_tune_cut] - min_acc_pf
-                            max_delta = max(max_delta,
-                                            max_acc_pf -
-                                            central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
-                                                curr_fine_tune_cut])
-
-                            if curr_acc < central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
-                                curr_fine_tune_cut]:
-                                curr_delta = central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
-                                                 curr_fine_tune_cut] - curr_acc
-                                intensity_name = 'deepcarmine'
+                            # import pdb
+                            # pdb.set_trace()
+                            if curr_finetune_timestamp in central_accuracies_per_fine_tune_cut[
+                                curr_category_to_evaluate]:
+                                max_delta = central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                                                curr_finetune_timestamp] - min_acc_pf
+                                max_delta = max(max_delta,
+                                                max_acc_pf -
+                                                central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                                                    curr_finetune_timestamp])
                             else:
-                                curr_delta = curr_acc - central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
-                                    curr_fine_tune_cut]
-                                intensity_name = 'darkspringgreen'
+                                max_delta = 0.0
+                            intensity_name = 'darkspringgreen'
+                            if curr_finetune_timestamp in central_accuracies_per_fine_tune_cut[
+                                curr_category_to_evaluate]:
+                                if curr_acc < central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                                    curr_finetune_timestamp]:
+                                    curr_delta = central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                                                     curr_finetune_timestamp] - curr_acc
+                                    intensity_name = 'deepcarmine'
+                                else:
+                                    curr_delta = curr_acc - \
+                                                 central_accuracies_per_fine_tune_cut[curr_category_to_evaluate][
+                                                     curr_finetune_timestamp]
+                                    intensity_name = 'darkspringgreen'
+                            else:
+                                curr_delta = 0.0
 
-                            ratio_max_delta = curr_delta / max_delta
+                            if max_delta > 0.0:
+                                ratio_max_delta = curr_delta / max_delta
+                            else:
+                                ratio_max_delta = 0.0
+
                             curr_range_intensity = int(range_intensity * ratio_max_delta)
                             curr_intensity = min_intensity + curr_range_intensity
                             to_ret_str += (' & \cellcolor{%s!%s}%.3f' % (intensity_name, curr_intensity, curr_acc))
                 else:
-                    for _ in cuts_to_show:
+                    for _ in finetune_snapshots:
                         to_ret_str += ' & -'
                 to_ret_str += ' \\\\ \n'
         to_ret_str += '\t\\bottomrule \n'
@@ -367,28 +530,35 @@ def print_general_table(results, config, categories_to_evaluate=None, subset_nam
 
 def serialize_results(stats, config):
     cuts_with_results = set()
-    fine_tune_cuts = config['fine_tune_cuts']
+    fine_tune_cuts = config['finetune_snapshots']
     for curr_fine_tune_cut in fine_tune_cuts:
         curr_timestamp = curr_fine_tune_cut['timestamp']
         cuts_with_results.add(curr_timestamp)
 
     serialized_csv_results = config['serialized_csv_results']
-    cuts_to_show = config['cuts_to_show']
+    finetune_snapshots = [sn['timestamp'] for sn in config['finetune_snapshots']]
     lst_pandas = list()
     for curr_model in config['models']:
-        for curr_subset in config['subsets']:
+        for curr_subset in config['evaluation_snapshots']:
             for curr_category_to_evaluate in config['categories_to_evaluate']:
-                for curr_fine_tune_cut in cuts_to_show:
+                for curr_fine_tune_cut in finetune_snapshots:
                     if curr_fine_tune_cut in cuts_with_results:
-                        for curr_predicted_cut in cuts_to_show:
-                            parsed_curr_date = datetime.strptime(curr_predicted_cut, '%Y-%m-%dT%H:%M:%SZ')
+                        # for curr_predicted_cut in finetune_snapshots:
+                        for curr_predicted_snapshot in curr_subset['subset_snapshots']:
+                            curr_snapshot_timestamp = curr_predicted_snapshot['timestamp']
+                            parsed_curr_date = datetime.strptime(curr_snapshot_timestamp, '%Y-%m-%dT%H:%M:%SZ')
                             curr_predicted_cut_year = int(parsed_curr_date.year)
 
                             parsed_curr_date = datetime.strptime(curr_fine_tune_cut, '%Y-%m-%dT%H:%M:%SZ')
                             curr_finetune_cut_year = int(parsed_curr_date.year)
 
+                            # import pdb
+                            #
+                            # pdb.set_trace()
+
                             curr_json_results = \
-                                stats[curr_fine_tune_cut][curr_subset['subset_name']][curr_predicted_cut][curr_model] \
+                                stats[curr_fine_tune_cut][curr_subset['subset_name']][curr_snapshot_timestamp][
+                                    curr_model] \
                                     [curr_category_to_evaluate].output_json()
                             #
                             lst_pandas.append(
@@ -420,7 +590,7 @@ def print_result_tables(results, config):
     """
 
     for curr_model in config['models']:
-        for curr_subset in config['subsets']:
+        for curr_subset in config['evaluation_snapshots']:
             print_general_table(results=results,
                                 config=config,
                                 categories_to_evaluate=config['categories_to_evaluate'],
@@ -429,27 +599,23 @@ def print_result_tables(results, config):
 
 
 if __name__ == '__main__':
-    # import pdb
-    #
-    # pdb.set_trace()
 
     parser = argparse.ArgumentParser(description='Evaluate biencoder\'s output')
     parser.add_argument('--config_file', required=False, type=str,
-                        default='experiments/data_export/wikipedia/dataset_creator/20220220/config/'
-                                'calculate_results_and_metrics_local.json',
+                        default='experiments/stats/results_metrics/20220630/config/s07_config_metrics.json',
                         help='The config file that contains all the parameters')
     args = parser.parse_args()
 
     config = json.load(open(args.config_file, 'rt'))
 
-    gold_context_mention_to_label = dict()
+    # gold_context_mention_to_label = dict()
     # --
     ground_truth_path = dict()
     predictions_path = dict()
 
-    subsets = config['subsets']
-    serialized_gold_path = config['serialized_gold_path']
-    os.makedirs(os.path.dirname(serialized_gold_path), exist_ok=True)
+    evaluation_snapshots = config['evaluation_snapshots']
+    # serialized_gold_path = config['serialized_gold_path']
+    # os.makedirs(os.path.dirname(serialized_gold_path), exist_ok=True)
     serialized_filtering_path = config['serialized_filtering_path']
     os.makedirs(os.path.dirname(serialized_filtering_path), exist_ok=True)
 
@@ -460,46 +626,16 @@ if __name__ == '__main__':
     top_k = max(top_k_list)
     list_cuts = list()
     dict_finetune_cuts = dict()
-    list_show_cuts = config['cuts_to_show']
+    list_show_cuts = config['finetune_snapshots']
     for curr_list_show_cuts in list_show_cuts:
-        stats[curr_list_show_cuts] = dict()
+        stats[curr_list_show_cuts['timestamp']] = dict()
+    # TODO: maybe replace by this one??
+    # list_show_cuts = config['finetune_snapshots']
+    # for curr_list_show_cuts in list_show_cuts:
+    #     stats[curr_list_show_cuts['timestamp']] = dict()
 
     logger.info('loading ground truth...')
     start_loading_gt = time.time()
-    if not os.path.exists(serialized_gold_path):
-        # loads the ground truth in subsets
-        for curr_subset in subsets:
-            subset_name = curr_subset['subset_name']
-            gold_context_mention_to_label[subset_name] = dict()
-            ground_truth_path[subset_name] = dict()
-
-            for curr_subset_time_cut in curr_subset['subset_cuts']:
-                curr_timestamp_str = curr_subset_time_cut['timestamp']
-                curr_input_file_name = curr_subset_time_cut['input_file_name']
-                ground_truth_path[subset_name][curr_timestamp_str] = os.path.join(input_dir_dataset,
-                                                                                  curr_input_file_name)
-
-                gold_context_mention_to_label[subset_name][curr_timestamp_str] = dict()
-                idx_mention_ground_truth = 0
-                logger.info('loading into gold_context_mention_to_label from: %s' %
-                            ground_truth_path[subset_name][curr_timestamp_str])
-                with open(ground_truth_path[subset_name][curr_timestamp_str], 'rt') as infile:
-                    logger.info('reading %s' % ground_truth_path[subset_name][curr_timestamp_str])
-                    for idx_mention_ground_truth, curr_line in tqdm(enumerate(infile)):
-                        parsed_line = json.loads(curr_line)
-                        ctxt_doc_id = parsed_line['anchor_wikidata_qid']
-                        ctxt_mention_id = idx_mention_ground_truth
-                        gold_label_doc_id = parsed_line['target_wikidata_qid']
-                        gold_context_mention_to_label[subset_name][curr_timestamp_str] \
-                            ['{}_{}'.format(ctxt_doc_id, ctxt_mention_id)] = \
-                            {
-                                'gold_doc_id': gold_label_doc_id,
-                                'orig_category': parsed_line['category']
-                            }
-        pickle.dump(gold_context_mention_to_label, open(serialized_gold_path, 'wb'))
-    else:
-        logger.info('pickle detected, loading')
-        gold_context_mention_to_label = pickle.load(open(serialized_gold_path, 'rb'))
 
     end_loading_gt = time.time()
 
@@ -513,12 +649,12 @@ if __name__ == '__main__':
         logger.info('loading extra info for filtering')
         if not os.path.exists(serialized_filtering_path):
             logger.info('not serialized, loading dictionary for filtering')
-            for curr_fine_tune_cut in config['fine_tune_cuts']:
+            for curr_fine_tune_cut in config['finetune_snapshots']:
                 dict_cut_to_target_qid_to_nr_mentions[curr_fine_tune_cut['timestamp']] = dict()
                 logger.info('loading %s' % curr_fine_tune_cut['input_file_train_set'])
                 for curr_line in tqdm(open(curr_fine_tune_cut['input_file_train_set'], 'rt')):
                     parsed_line = json.loads(curr_line)
-                    target_wikidata_qid = parsed_line['target_wikidata_qid']
+                    target_wikidata_qid = parsed_line['target_qid']
                     if target_wikidata_qid not in dict_cut_to_target_qid_to_nr_mentions[
                         curr_fine_tune_cut['timestamp']]:
                         dict_cut_to_target_qid_to_nr_mentions[curr_fine_tune_cut['timestamp']][target_wikidata_qid] = 0
@@ -538,6 +674,8 @@ if __name__ == '__main__':
             dict_cut_to_top_mentions_target_qids[curr_cut] = top_target_qids
 
     #
+    os.makedirs(os.path.dirname(config['serialized_csv_detail_stats']), exist_ok=True)
+
     out_file_csv_detail_stats = open(config['serialized_csv_detail_stats'], 'wt')
 
     csv_writer = csv.writer(out_file_csv_detail_stats, delimiter='\t')
@@ -546,25 +684,27 @@ if __name__ == '__main__':
     lst_to_add_to_pandas = list()
     cache_tuples_path = config['cache_tuples_path']
     #
-    saved_tuples = pickle.load(open(cache_tuples_path, 'rb'))
+    # saved_tuples = pickle.load(open(cache_tuples_path, 'rb'))
+    saved_tuples = get_tuples_per_year(config)
     logger.info('tuples loaded')
 
     for curr_model in config['models']:
-        for curr_fine_tune_cut in config['fine_tune_cuts']:
+        for curr_fine_tune_cut in config['finetune_snapshots']:
             input_dir_predictions = curr_fine_tune_cut['input_dir_predictions']
             logger.info('EVALUATING predictions in %s' % input_dir_predictions)
             if curr_fine_tune_cut['timestamp'] not in dict_finetune_cuts:
                 dict_finetune_cuts[curr_fine_tune_cut['timestamp']] = None
 
             curr_finetune_timestamp = curr_fine_tune_cut['timestamp']
-            for curr_subset in subsets:
+            for curr_subset in evaluation_snapshots:
                 subset_name = curr_subset['subset_name']
 
                 predictions_path[subset_name] = dict()
                 stats[curr_finetune_timestamp][subset_name] = dict()
 
-                for curr_subset_time_cut in curr_subset['subset_cuts']:
-                    # YES, I KNOW IT IS O(N), but it is a very short list
+                # for curr_subset_time_cut in curr_subset['evaluation_snapshots']:
+                for curr_subset_time_cut in curr_subset['subset_snapshots']:
+                    # O(N), but it is a very short list
                     if curr_subset_time_cut['timestamp'] not in list_cuts:
                         list_cuts.append(curr_subset_time_cut['timestamp'])
                     curr_timestamp_str = curr_subset_time_cut['timestamp']
@@ -614,11 +754,13 @@ if __name__ == '__main__':
     out_file_csv_detail_stats.close()
     logger.info('reading saved csv from disc to pandas dataframe')
     df_to_subsample = pd.read_csv(open(config['serialized_csv_detail_stats'], 'rt'), sep='\t', header=[0])
-    logger.info('finished reading saved csv from disc to pandas dataframe, now subsampling')
-    df_to_subsample = df_to_subsample.loc[np.random.choice(df_to_subsample.index, 100000, replace=False)]
-    logger.info('finished subsampling saved csv from disc to pandas dataframe, now saving back to disc')
-    df_to_subsample.to_csv(config['serialized_csv_detail_stats_subsampled'], sep='\t', index=False)
-    logger.info('finished saving subsampled dataframe to disc')
+    logger.info('finished reading saved csv from disc to pandas dataframe')
+    #
+    # logger.info('finished reading saved csv from disc to pandas dataframe, now subsampling')
+    # df_to_subsample = df_to_subsample.loc[np.random.choice(df_to_subsample.index, 100000, replace=False)]
+    # logger.info('finished subsampling saved csv from disc to pandas dataframe, now saving back to disc')
+    # df_to_subsample.to_csv(config['serialized_csv_detail_stats_subsampled'], sep='\t', index=False)
+    # logger.info('finished saving subsampled dataframe to disc')
     #
     serialize_results(stats, config)
     print_result_tables(stats, config)

@@ -15,8 +15,8 @@ from multiprocessing import Process, Value
 from threading import Thread
 from typing import List
 
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from utils import tempel_logger
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

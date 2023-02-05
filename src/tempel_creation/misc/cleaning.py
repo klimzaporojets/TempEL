@@ -7,8 +7,8 @@ from time import sleep
 import mwparserfromhell
 from mwparserfromhell.wikicode import Wikicode
 
-from tempel_creation.misc.recursive_cleaning import recursive_clean, recursive_clean_klim
-from utils import tempel_logger
+from src.tempel_creation.misc.recursive_cleaning import recursive_clean, recursive_clean_klim
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

@@ -1,0 +1,143 @@
+{
+  "debug": false,
+  "debug_length": 500,
+  "input_dir_dataset": "experiments/dataset_creation/data_20230112_from_cloud/tempel_v1.0_only_bert_tokenized/test/",
+  "_serialized_gold_path": "experiments/stats/results_metrics/20220630/output/serialized_gold/serialized_gold.pickle",
+  "serialized_filtering_path": "experiments/stats/results_metrics/20220630/output/serialized_gold/serialized_filtering.pickle",
+  "serialized_csv_results": "experiments/stats/results_metrics/20220630/output/serialized_csv/serialized_results.csv",
+  "serialized_csv_detail_stats": "experiments/stats/results_metrics/20220630/output/serialized_csv/serialized_csv_detail_stats.csv",
+  "serialized_csv_detail_stats_subsampled": "experiments/stats/results_metrics/20220630/output/serialized_csv/serialized_csv_detail_stats_subsampled.csv",
+  "cache_tuples_path": "experiments/dataset_creation/20220630/output/caches_stats/tuples.pickle",
+  "_cache_tuples_path": "experiments/dataset_creation/data_20220615/output/s04_caches_stats/tuples.pickle",
+  "look_in_entity_text": false,
+  "models": [
+    "biencoder"
+  ],
+  "categories_to_evaluate": [
+    "shared",
+    "new_entities"
+  ],
+  "filter_train": {
+    "top_most_targeted_entities": -1
+  },
+  "top_k_list": [
+    1,
+    2,
+    4,
+    8,
+    16,
+    32,
+    64
+  ],
+  "_cuts_to_show": [
+    "2013-01-01T00:00:00Z",
+    "2014-01-01T00:00:00Z",
+    "2015-01-01T00:00:00Z",
+    "2016-01-01T00:00:00Z",
+    "2017-01-01T00:00:00Z",
+    "2018-01-01T00:00:00Z",
+    "2019-01-01T00:00:00Z",
+    "2020-01-01T00:00:00Z",
+    "2021-01-01T00:00:00Z",
+    "2022-01-01T00:00:00Z"
+  ],
+  "finetune_snapshots": [
+    {
+      "timestamp": "2013-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2013/json/test/"
+    },
+    {
+      "timestamp": "2014-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2014/json/test/"
+    },
+    {
+      "timestamp": "2015-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2015/json/test/"
+    },
+    {
+      "timestamp": "2016-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2016/json/test/"
+    },
+    {
+      "timestamp": "2017-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2017/json/test/"
+    },
+    {
+      "timestamp": "2018-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2018/json/test/"
+    },
+    {
+      "timestamp": "2019-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2019/json/test/"
+    },
+    {
+      "timestamp": "2020-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2020/json/test/"
+    },
+    {
+      "timestamp": "2021-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2021/json/test/"
+    },
+    {
+      "timestamp": "2022-01-01T00:00:00Z",
+      "input_dir_predictions": "experiments/models/blink/biencoder/evaluate/20220630/output/predictions/2022/json/test/"
+    }
+  ],
+  "evaluation_snapshots": [
+    {
+      "subset_name": "test",
+      "subset_snapshots": [
+        {
+          "timestamp": "2013-01-01T00:00:00Z",
+          "input_file_name": "2013-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2013-01-01T00:00:00Z_e2013-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2014-01-01T00:00:00Z",
+          "input_file_name": "2014-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2014-01-01T00:00:00Z_e2014-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2015-01-01T00:00:00Z",
+          "input_file_name": "2015-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2015-01-01T00:00:00Z_e2015-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2016-01-01T00:00:00Z",
+          "input_file_name": "2016-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2016-01-01T00:00:00Z_e2016-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2017-01-01T00:00:00Z",
+          "input_file_name": "2017-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2017-01-01T00:00:00Z_e2017-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2018-01-01T00:00:00Z",
+          "input_file_name": "2018-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2018-01-01T00:00:00Z_e2018-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2019-01-01T00:00:00Z",
+          "input_file_name": "2019-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2019-01-01T00:00:00Z_e2019-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2020-01-01T00:00:00Z",
+          "input_file_name": "2020-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2020-01-01T00:00:00Z_e2020-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2021-01-01T00:00:00Z",
+          "input_file_name": "2021-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2021-01-01T00:00:00Z_e2021-01-01T00:00:00Z.jsonl"
+        },
+        {
+          "timestamp": "2022-01-01T00:00:00Z",
+          "input_file_name": "2022-01-01T00:00:00Z_test.jsonl",
+          "pred_file_name": "pred_test_m2022-01-01T00:00:00Z_e2022-01-01T00:00:00Z.jsonl"
+        }
+      ]
+    }
+  ]
+}

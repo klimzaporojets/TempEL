@@ -7,8 +7,8 @@ import pickle
 
 import numpy as np
 
-from models.biencoder.faiss_indexer import DenseHNSWFlatIndexer, DenseFlatIndexer
-from utils import tempel_logger
+from src.models.biencoder.faiss_indexer import DenseHNSWFlatIndexer, DenseFlatIndexer
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)

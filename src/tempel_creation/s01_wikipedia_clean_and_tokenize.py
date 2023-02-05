@@ -21,14 +21,14 @@ import py7zr
 import requests
 from pytorch_transformers import BertTokenizer
 
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from tempel_creation.misc.cleaning import gross_clean, fine_clean, clean_text_from_link_markers
-from tempel_creation.misc.compiled_regexes import compiled_regexes
-from tempel_creation.misc.load_wiki_sql_tables import load_wiki_page_title_to_wiki_page_id, \
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.tempel_creation.misc.cleaning import gross_clean, fine_clean, clean_text_from_link_markers
+from src.tempel_creation.misc.compiled_regexes import compiled_regexes
+from src.tempel_creation.misc.load_wiki_sql_tables import load_wiki_page_title_to_wiki_page_id, \
     load_wiki_page_id_to_redirected_page_id, load_wiki_page_id_to_wikidata_qid
-from tempel_creation.misc.seven_zip_reader import SevenZipStreamDecompressor
-from tempel_creation.misc.wikipedia_history_reader import WikipediaHistoryReader
-from utils import tempel_logger
+from src.tempel_creation.misc.seven_zip_reader import SevenZipStreamDecompressor
+from src.tempel_creation.misc.wikipedia_history_reader import WikipediaHistoryReader
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -265,10 +265,10 @@ def get_mentions_and_links(source, source_length, source_title, anchor_wikidata_
     for curr_mention_link in mention_links:
         curr_mention_link['target_wikipedia_page_id'] = None
         curr_mention_link['target_wikipedia_title'] = None
-        curr_mention_link['target_wikidata_qid'] = None
+        curr_mention_link['target_qid'] = None
         curr_mention_link['anchor_content_length'] = anchor_content_length
         curr_mention_link['anchor_wikipedia_title'] = source_title
-        curr_mention_link['anchor_wikidata_qid'] = anchor_wikidata_qid
+        curr_mention_link['anchor_qid'] = anchor_wikidata_qid
         curr_mention_link['filtered_date'] = filtered_date
 
     return mention_links, tot_detected_mentions, tot_links_errors
@@ -285,11 +285,11 @@ def process_page_link_stats_writer(shutdown_file_writers, time_cut_list, output_
         csv_links_files[curr_time_cut] = curr_page_info_file
         # adds title header into csv file
         csv_links_writers[curr_time_cut].writerow(
-            ['anchor_wikidata_qid',
+            ['anchor_qid',
              'anchor_wikipedia_title',
              'anchor_wikipedia_page_id',
              'anchor_mention_text',
-             'target_wikidata_qid',
+             'target_qid',
              'target_wikipedia_title',
              'target_wikipedia_title_orig',
              'target_page_id',
@@ -475,11 +475,11 @@ def process_article(wikipedia_page_id_to_wikidata_qid, wikipedia_page_id_to_redi
                                                   title_of_page_info_per_date[curr_filtered_date]['page_id']]})
 
                 for curr_mention_link in mention_links:
-                    link_stats_csv_row = [curr_mention_link['anchor_wikidata_qid'],
+                    link_stats_csv_row = [curr_mention_link['anchor_qid'],
                                           curr_mention_link['anchor_wikipedia_title'],
                                           page_id,
                                           curr_mention_link['anchor_mention_text'],
-                                          curr_mention_link['target_wikidata_qid'],
+                                          curr_mention_link['target_qid'],
                                           curr_mention_link['target_wikipedia_title'],
                                           curr_mention_link['target_wikipedia_title_orig'],
                                           curr_mention_link['target_wikipedia_page_id'],

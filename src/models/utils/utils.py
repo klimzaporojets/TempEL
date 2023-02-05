@@ -13,7 +13,7 @@ from pytorch_transformers.modeling_utils import CONFIG_NAME
 # Custom objects know their class.
 # Function objects seem to know way too much, including modules.
 # Exclude modules as well.
-from utils import tempel_logger
+from src.utils import tempel_logger
 
 BLACKLIST = type, ModuleType, FunctionType
 
@@ -22,9 +22,10 @@ logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-def read_dataset(dataset_name, dataset_path, time_cut, debug=False, debug_size=10):
+def read_dataset(dataset_path, file_name, debug=False, debug_size=10):
     # test_2013-01-01T00:00:00Z_all.jsonl
-    file_name = '{}_{}_all.jsonl'.format(time_cut, dataset_name)
+    # file_name = '{}_{}_all.jsonl'.format(time_cut, dataset_name)
+    # file_name = '{}_{}.jsonl'.format(time_cut, dataset_name)
     txt_file_path = os.path.join(dataset_path, file_name)
 
     samples = []

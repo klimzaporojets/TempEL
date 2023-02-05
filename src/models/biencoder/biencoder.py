@@ -2,9 +2,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from models.utils.custom_bert import BertModel
-from models.utils.optimizer import get_bert_optimizer
-from models.utils.ranker_base import BertEncoder
+from src.models.utils.custom_bert import BertModel
+from src.models.utils.optimizer import get_bert_optimizer
+from src.models.utils.ranker_base import BertEncoder
 
 NULL_IDX = 0
 

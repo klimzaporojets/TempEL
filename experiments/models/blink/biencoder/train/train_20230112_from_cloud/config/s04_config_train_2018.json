@@ -1,0 +1,7 @@
+{
+  "_time_cut": "2018-01-01T00:00:00Z",
+  "train_file": "2018-01-01T00:00:00Z_train.jsonl",
+  "val_file": "2018-01-01T00:00:00Z_validation.jsonl",
+  "output_path": "experiments/models/blink/biencoder/train/train_20230112_from_cloud/output/models/2018/",
+  "output_model_name": "model_trained_on_2018-01-01_lr1e-4.bin"
+}

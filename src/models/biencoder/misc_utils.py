@@ -6,9 +6,9 @@ from typing import List
 import torch
 from tqdm import tqdm
 
-from models.biencoder.biencoder import BiEncoder
-from models.utils.utils import chunk_document_in_sentences
-from utils import tempel_logger
+from src.models.biencoder.biencoder import BiEncoder
+from src.models.utils.utils import chunk_document_in_sentences
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -104,9 +104,10 @@ def generate_and_save_json(nn_data, test_samples, params,
                                'json', subset_name)
 
     test_samples_original = list()
-    path_test_samples_original = os.path.join(data_path, '{}{}_{}_all.jsonl'
-                                              .format(params['dataset_filename_prefix'], date_cut['mentions_cut'],
-                                                      subset_name))
+    path_test_samples_original = os.path.join(data_path, date_cut['test_file'])
+    # path_test_samples_original = os.path.join(data_path, '{}{}_{}_all.jsonl'
+    #                                           .format(params['dataset_filename_prefix'], date_cut['mentions_cut'],
+    #                                                   subset_name))
     with open(path_test_samples_original, 'rt') as orig_set:
         for idx, line in enumerate(orig_set):
             test_samples_original.append(json.loads(line))
@@ -120,9 +121,9 @@ def generate_and_save_json(nn_data, test_samples, params,
 
     os.makedirs(output_path, exist_ok=True)
 
-    out_json_path = os.path.join(output_path, 'pred_{}_m{}_e{}_all.jsonl'.format(subset_name,
-                                                                                 date_cut['mentions_cut'],
-                                                                                 date_cut['entities_cut']))
+    out_json_path = os.path.join(output_path, 'pred_{}_m{}_e{}.jsonl'.format(subset_name,
+                                                                             date_cut['mentions_cut'],
+                                                                             date_cut['entities_cut']))
 
     directory = os.path.dirname(out_json_path)
     os.makedirs(directory, exist_ok=True)
@@ -130,14 +131,14 @@ def generate_and_save_json(nn_data, test_samples, params,
     with open(out_json_path, 'wt') as outfile:
         for idx_datapoint, (curr_sample, curr_sample_orig) in tqdm(enumerate(zip(test_samples, test_samples_original))):
             assert curr_sample['category'] == curr_sample_orig['category']
-            assert curr_sample['anchor_wikidata_qid'] == curr_sample_orig['anchor_wikidata_qid']
-            assert curr_sample['target_wikidata_qid'] == curr_sample_orig['target_wikidata_qid']
+            # assert curr_sample['anchor_qid'] == curr_sample_orig['anchor_qid']
+            assert curr_sample['target_qid'] == curr_sample_orig['target_qid']
 
             curr_sample_json = dict()
 
-            curr_sample_json['anchor_wikidata_qid'] = curr_sample_orig['anchor_wikidata_qid']
-            curr_sample_json['mention_bert_tokenized'] = curr_sample_orig['mention_bert_tokenized']
-            curr_sample_json['gold_label_doc_id'] = curr_sample_orig['target_wikidata_qid']
+            # curr_sample_json['anchor_qid'] = curr_sample_orig['anchor_qid']
+            curr_sample_json['mention_bert'] = curr_sample_orig['mention_bert']
+            curr_sample_json['gold_label_doc_id'] = curr_sample_orig['target_qid']
 
             curr_sample_json['category'] = curr_sample_orig['category']
 
@@ -185,68 +186,13 @@ def generate_and_save_json(nn_data, test_samples, params,
 # Utility code for zeshel dataset
 import json
 
-DOC_PATH = 'data/zeshel/documents/'  # kzaporoj - original:  DOC_PATH = '/private/home/ledell/zeshel/data/documents/'
+# DOC_PATH = 'data/zeshel/documents/'  # kzaporoj - original:  DOC_PATH = '/private/home/ledell/zeshel/data/documents/'
 
 WORLDS = [
     'wikipedia'
-    # 'american_football',
-    # 'doctor_who',
-    # 'fallout',
-    # 'final_fantasy',
-    # 'military',
-    # 'pro_wrestling',
-    # 'starwars',
-    # 'world_of_warcraft',
-    # 'coronation_street',
-    # 'muppets',
-    # 'ice_hockey',
-    # 'elder_scrolls',
-    # 'forgotten_realms',
-    # 'lego',
-    # 'star_trek',
-    # 'yugioh'
 ]
 
 world_to_id = {src: k for k, src in enumerate(WORLDS)}
-
-
-# def load_entity_dict_zeshel(logger, params):
-def load_entity_dict_zeshel(logger, params):
-    # puts raise to see that no execution enters here
-    # raise RuntimeError('checking if load_entity_dict_zeshel is necessary')
-
-    entity_dict = {}
-    # different worlds in train/valid/test
-    if params['mode'] == 'train':
-        start_idx = 0
-        end_idx = 8
-    elif params['mode'] == 'valid':
-        start_idx = 8
-        end_idx = 12
-    else:
-        start_idx = 12
-        end_idx = 16
-    # load data
-    for i, src in enumerate(WORLDS[start_idx:end_idx]):
-        fname = DOC_PATH + src + '.json'
-        cur_dict = {}
-        doc_list = []
-        src_id = world_to_id[src]
-        with open(fname, 'rt') as f:
-            for line in f:
-                line = line.rstrip()
-                item = json.loads(line)
-                text = item['text']
-                doc_list.append(text[:256])
-
-                if params['debug']:
-                    # if len(doc_list) > 200:
-                    if len(doc_list) >= params['debug_size']:
-                        break
-
-        logger.info('Load for world %s.' % src)
-        entity_dict[src_id] = doc_list
-    return entity_dict
 
 
 class Stats():

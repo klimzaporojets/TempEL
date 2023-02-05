@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm import tqdm
 
-from models.biencoder.misc_utils import Stats
-from tempel_creation.misc.utils import from_bert_to_text
-from utils import tempel_logger
+from src.models.biencoder.misc_utils import Stats
+from src.tempel_creation.misc.utils import from_bert_to_text
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -501,14 +501,14 @@ if __name__ == '__main__':
                     parsed_line = json.loads(curr_line)
                     if parsed_line['category'] != config['category_new_entities']:
                         continue
-                    bert_entity_tokenized = parsed_line['target_bert_tokenized'][:context_length]
+                    bert_entity_tokenized = parsed_line['target_bert'][:context_length]
                     target_orig_title = parsed_line['target_orig_title'].lower()
                     text_entity_tokenized = set(from_bert_to_text(bert_entity_tokenized).strip().lower().split(' '))
                     men_context_length = int(context_length / 2)
-                    parsed_line['mention'] = from_bert_to_text(parsed_line['mention_bert_tokenized'])
-                    bert_ctxt_men_tokenized = parsed_line['context_left_bert_tokenized'][-men_context_length:] + \
+                    parsed_line['mention'] = from_bert_to_text(parsed_line['mention_bert'])
+                    bert_ctxt_men_tokenized = parsed_line['context_left_bert'][-men_context_length:] + \
                                               [parsed_line['mention']] + \
-                                              parsed_line['context_right_bert_tokenized'][:men_context_length]
+                                              parsed_line['context_right_bert'][:men_context_length]
                     text_ctxt_men_tokenized = set(from_bert_to_text(bert_ctxt_men_tokenized).strip().split(' '))
 
                     filtered_entity = False
@@ -519,7 +519,7 @@ if __name__ == '__main__':
                                                   config=config, text_entity_tokenized=text_entity_tokenized)
 
                     logger.debug('%s +++ %s ===== %s' % (curr_year, target_orig_title, type))
-                    dict_filtered_to_cut_to_doc_ids[curr_timestamp_str][type].add(parsed_line['target_wikidata_qid'])
+                    dict_filtered_to_cut_to_doc_ids[curr_timestamp_str][type].add(parsed_line['target_qid'])
 
     end_loading_gt = time.time()
 

@@ -9,9 +9,9 @@ import traceback
 
 import pandas as pd
 
-from tempel_creation.misc.load_wiki_sql_tables import load_wiki_page_id_to_wikidata_qid
-from tempel_creation.misc.utils import get_ratio_edit_distance_v2
-from utils import tempel_logger
+from src.tempel_creation.misc.load_wiki_sql_tables import load_wiki_page_id_to_wikidata_qid
+from src.tempel_creation.misc.utils import get_ratio_edit_distance_v2
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -238,14 +238,14 @@ if __name__ == "__main__":
                 # if idx >= 1000:
                 if idx >= 1:
                     break
-                logger.debug('%s - %s' % (curr_row['anchor_wikidata_qid'], curr_row['anchor_mention_text']))
+                logger.debug('%s - %s' % (curr_row['anchor_qid'], curr_row['anchor_mention_text']))
 
             logger.debug('=========== TITLES of cut %s' % curr_time_cut)
             for idx, curr_row in curr_df_link_stats.iterrows():
                 # if idx >= 1000:
                 if idx >= 1:
                     break
-                logger.debug('%s - %s' % (curr_row['anchor_wikidata_qid'], curr_row['target_wikipedia_title_orig']))
+                logger.debug('%s - %s' % (curr_row['anchor_qid'], curr_row['target_wikipedia_title_orig']))
             logger.debug('=========================')
 
         start = time.time()
@@ -257,11 +257,11 @@ if __name__ == "__main__":
 
         start = time.time()
         curr_df_dict_index = curr_df_link_stats[['anchor_mention_text',
-                                                 'anchor_wikidata_qid',
+                                                 'anchor_qid',
                                                  'target_wikipedia_title_orig',
                                                  'filtered_date']]
         curr_df_dict_index = curr_df_dict_index.groupby(['anchor_mention_text',
-                                                         'anchor_wikidata_qid',
+                                                         'anchor_qid',
                                                          'target_wikipedia_title_orig',
                                                          'filtered_date']) \
             .size().reset_index(name='count_mentions_entities_anchorqid')
@@ -314,13 +314,13 @@ if __name__ == "__main__":
         start = time.time()
 
         logger.info('beginning get_wikidata_qid on curr_df_link_stats with shape of %s' % str(curr_df_link_stats.shape))
-        curr_df_link_stats['target_wikidata_qid'] = \
+        curr_df_link_stats['target_qid'] = \
             curr_df_link_stats.apply(lambda row: get_wikidata_qid(wikipedia_page_id_to_wikidata_qid, row), axis=1)
         end = time.time()
         logger.info('%s minutes took get_wikidata_qid' % ((end - start) / 60))
-        df_not_found_qid = curr_df_link_stats[curr_df_link_stats['target_wikidata_qid'] == '-1']
+        df_not_found_qid = curr_df_link_stats[curr_df_link_stats['target_qid'] == '-1']
         logger.info('shape of not found qid dataframe is: %s' % str(df_not_found_qid.shape))
-        curr_df_link_stats = curr_df_link_stats[curr_df_link_stats['target_wikidata_qid'] != '-1']
+        curr_df_link_stats = curr_df_link_stats[curr_df_link_stats['target_qid'] != '-1']
 
         # now that we have qids, we merge directly by page_id with the index df to get that qids there
         start = time.time()
@@ -328,7 +328,7 @@ if __name__ == "__main__":
                     str(curr_df_dict_index.shape))
         curr_df_dict_index = pd.merge(curr_df_dict_index,
                                       curr_df_link_stats.drop_duplicates(['page_id'])[
-                                          ['page_id', 'target_wikidata_qid']],
+                                          ['page_id', 'target_qid']],
                                       on=('page_id',), how='inner')
         end = time.time()
         logger.info('%s minutes took merge with curr_df_link_stats for wikidata_qid' % ((end - start) / 60))
@@ -419,7 +419,7 @@ if __name__ == "__main__":
         #     8. Filtered_date --> the time cut date.
         curr_df_link_stats = curr_df_link_stats[[
             'anchor_mention_text',
-            'target_wikidata_qid',
+            'target_qid',
             'target_wikipedia_title_orig',
             'target_page_id',
             'filtered_date',
@@ -431,7 +431,7 @@ if __name__ == "__main__":
         # difficulty of a particular entity to be disambiguated
         logger.info('starting grouping by dense curr_df_link_stats with shape %s' % str(curr_df_link_stats.shape))
         start = time.time()
-        curr_df_link_stats['prior_rank'] = curr_df_link_stats.groupby('target_wikidata_qid')['prior'] \
+        curr_df_link_stats['prior_rank'] = curr_df_link_stats.groupby('target_qid')['prior'] \
             .rank('dense', ascending=False)
 
         # we are here --> this prior_rank was wrongly calculated, should be wrt mention (prior_rank_men in true)!!!
@@ -476,27 +476,27 @@ if __name__ == "__main__":
                     '"overlap_type"' % ((end - start) / 60))
 
         start = time.time()
-        df_avg_prior = curr_df_link_stats[['target_wikidata_qid',
-                                           'prior_rank', 'prior']].groupby('target_wikidata_qid').mean()
+        df_avg_prior = curr_df_link_stats[['target_qid',
+                                           'prior_rank', 'prior']].groupby('target_qid').mean()
         end = time.time()
         logger.info('%s minutes to groupby target_wikidata_qid' % ((end - start) / 60))
 
         df_avg_prior.rename(columns={'prior_rank': 'avg_prior_rank',
                                      'prior': 'avg_prior'}, inplace=True)
         start = time.time()
-        df_nr_inlinks = curr_df_link_stats[['target_wikidata_qid', 'nr_links']] \
-            .groupby('target_wikidata_qid').sum()
+        df_nr_inlinks = curr_df_link_stats[['target_qid', 'nr_links']] \
+            .groupby('target_qid').sum()
         end = time.time()
         logger.info('%s minutes to groupby target_wikidata_qid' % ((end - start) / 60))
         df_nr_inlinks.rename(columns={'nr_links': 'nr_inlinks'}, inplace=True)
         start = time.time()
-        curr_df_link_stats = pd.merge(curr_df_link_stats, df_avg_prior, left_on=('target_wikidata_qid',),
-                                      right_on=('target_wikidata_qid',), how='inner')
+        curr_df_link_stats = pd.merge(curr_df_link_stats, df_avg_prior, left_on=('target_qid',),
+                                      right_on=('target_qid',), how='inner')
         end = time.time()
         logger.info('%s minutes to merge on target_wikidata_qid on df_avg_prior' % ((end - start) / 60))
         start = time.time()
-        curr_df_link_stats = pd.merge(curr_df_link_stats, df_nr_inlinks, left_on=('target_wikidata_qid',),
-                                      right_on=('target_wikidata_qid',), how='inner')
+        curr_df_link_stats = pd.merge(curr_df_link_stats, df_nr_inlinks, left_on=('target_qid',),
+                                      right_on=('target_qid',), how='inner')
         end = time.time()
         logger.info('%s minutes to merge on target_wikidata_qid on df_nr_inlinks' % ((end - start) / 60))
 
@@ -512,7 +512,7 @@ if __name__ == "__main__":
                                       right=df_page_info[
                                           ['wikidata_qid', 'wikipedia_creation_time', 'wikipedia_revision_time',
                                            'content_length']],
-                                      left_on='target_wikidata_qid',
+                                      left_on='target_qid',
                                       right_on='wikidata_qid')
 
         if curr_df_link_stats.shape[0] != before_merge_len:

@@ -1,0 +1,6 @@
+{
+  "cand_faiss_path": "models/blink/biencoder/encode/20220630/output/faiss/2013/",
+  "model": {
+    "path_to_model": "experiments/models/blink/biencoder/train/train_bi_20220630/output/models_ep_9_only/2013/model_epoch_09.bin"
+  }
+}

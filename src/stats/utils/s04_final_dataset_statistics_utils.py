@@ -12,8 +12,8 @@ import pandas as pd
 from matplotlib.ticker import MaxNLocator
 from tqdm import tqdm
 
-from tempel_creation.misc import from_bert_to_text
-from utils import tempel_logger
+from src.tempel_creation.misc.utils import from_bert_to_text
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -105,7 +105,7 @@ def get_subset_distribution(subset_path):
         for curr_line in infile:
             parsed_line = json.loads(curr_line)
             nr_mentions += 1
-            target_wikidata_qid = parsed_line['target_wikidata_qid']
+            target_wikidata_qid = parsed_line['target_qid']
             curr_mention = parsed_line['mention']
             target_wikidata_qids.add(target_wikidata_qid)
             if parsed_line['category'] in {'continual', 'shared'}:
@@ -145,10 +145,10 @@ def get_subset_distribution(subset_path):
 
 def process_dataset_tuple(curr_tuple, subset_name):
     parsed_tuple = json.loads(curr_tuple)
-    fld_mention = parsed_tuple['mention_bert_tokenized']
+    fld_mention = parsed_tuple['mention_bert']
     fld_mention = from_bert_to_text(fld_mention)
     fld_subset = parsed_tuple['subset']
-    fld_entity_qid = parsed_tuple['target_wikidata_qid']
+    fld_entity_qid = parsed_tuple['target_qid']
     fld_cut = parsed_tuple['filtered_date']
     parsed_curr_date = datetime.strptime(fld_cut, '%Y-%m-%dT%H:%M:%SZ')
     fld_cut = parsed_curr_date.year
@@ -159,12 +159,12 @@ def process_dataset_tuple(curr_tuple, subset_name):
     fld_category = parsed_tuple['category']
     fld_target_orig_title = parsed_tuple['target_orig_title']
     # just the first 256 bert tokens
-    fld_target_bert_tokenized = parsed_tuple['target_bert_tokenized'][:256]
+    fld_target_bert_tokenized = parsed_tuple['target_bert'][:256]
     assert fld_subset == subset_name
 
     return {'mention': fld_mention, 'subset': fld_subset, 'entity_qid': fld_entity_qid, 'cut': fld_cut,
             'category': fld_category, 'target_len': fld_target_len, 'anchor_len': fld_anchor_len,
-            'target_orig_title': fld_target_orig_title, 'target_bert_tokenized': fld_target_bert_tokenized}
+            'target_orig_title': fld_target_orig_title, 'target_bert': fld_target_bert_tokenized}
 
 
 def get_tuples_per_year(config):
@@ -461,9 +461,9 @@ def print_some_examples_in_md(config):
                 if nr_printed_examples >= max_examples_per_cut:
                     break
                 parsed_line = json.loads(curr_data_point)
-                left_context = from_bert_to_text(parsed_line['context_left_bert_tokenized'])
-                right_context = from_bert_to_text(parsed_line['context_right_bert_tokenized'])
-                target_text = from_bert_to_text(parsed_line['target_bert_tokenized'])
+                left_context = from_bert_to_text(parsed_line['context_left_bert'])
+                right_context = from_bert_to_text(parsed_line['context_right_bert'])
+                target_text = from_bert_to_text(parsed_line['target_bert'])
                 target_orig_title = parsed_line['target_orig_title']
                 mention = parsed_line['mention']
 
@@ -476,13 +476,13 @@ def print_some_examples_in_md(config):
                 outfile.write('\n')
                 outfile.write('__Target entity triples__: TODO' + '\n')
                 outfile.write('\n')
-                del parsed_line['context_left_bert_tokenized']
-                del parsed_line['context_right_bert_tokenized']
-                del parsed_line['target_bert_tokenized']
+                del parsed_line['context_left_bert']
+                del parsed_line['context_right_bert']
+                del parsed_line['target_bert']
                 del parsed_line['target_orig_title']
-                del parsed_line['target_title_bert_tokenized']
+                del parsed_line['target_title_bert']
                 del parsed_line['mention']
-                del parsed_line['mention_bert_tokenized']
+                del parsed_line['mention_bert']
                 del parsed_line['target_title_2022']
                 outfile.write('__*Attributes*__: \n\n' + str(parsed_line) + '\n')
                 outfile.write('\n')

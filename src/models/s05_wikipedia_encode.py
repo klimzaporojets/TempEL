@@ -9,11 +9,12 @@ from multiprocessing import Process, Value
 from threading import Thread
 
 import git
+import torch
 
-from models.utils.s05_wikipedia_encode_utils import get_candidate_encodings_parallel, gather_and_write_encodings, \
+from src.models.utils.s05_wikipedia_encode_utils import get_candidate_encodings_parallel, gather_and_write_encodings, \
     gather_candidate_encodings, display
-from tempel_creation.misc.article_queue import ArticleReadingQueue
-from utils import tempel_logger
+from src.tempel_creation.misc.article_queue import ArticleReadingQueue
+from src.utils import tempel_logger
 
 logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
                     datefmt='%m/%d/%Y %H:%M:%S', level=tempel_logger.logger_level)
@@ -27,12 +28,12 @@ def main_entry(params, nr_gpus):
 
     already_processed_qids = set()
     logger.info('LOADING already_processed_qids')
-    input_file_path = params['output_file']
+    # input_file_path = params['output_file']
     base_experiment_path = params['base_experiment_path']
-    input_file_path = os.path.join(base_experiment_path, input_file_path)
-    start = time.time()
-    end = time.time()
-    logger.info('%s minutes to read checkpoint: %s' % (((end - start) / 60), input_file_path))
+    # input_file_path = os.path.join(base_experiment_path, input_file_path)
+    # start = time.time()
+    # end = time.time()
+    # logger.info('%s minutes to read checkpoint: %s' % (((end - start) / 60), input_file_path))
 
     cand_faiss_path = os.path.join(base_experiment_path, params['cand_faiss_path'])
 
@@ -114,21 +115,37 @@ def main_entry(params, nr_gpus):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--config_file', required=False, type=str,
-                        # TODO
-                        default='TODO',
-                        help='The config file that contains all the parameters')
-    parser.add_argument('--nr_gpus', required=False, type=int,
-                        default=4,
-                        help='the nr of gpus')
+    # parser.add_argument('--config_file', required=False, type=str,
+    #                     # TODO
+    #                     default='TODO',
+    #                     help='The config file that contains all the parameters')
+    # parser.add_argument('--nr_gpus', required=False, type=int,
+    #                     default=4,
+    #                     help='the nr of gpus')
+
+    parser.add_argument('--config_parent_path', required=False, type=str,
+                        default='experiments/models/blink/biencoder/encode/20220630/config/'
+                                's05_config_encode_parent.json',
+                        help='Config file with generic experiment hyperparameters shared among all the temporal '
+                             'snapshots')
+
+    parser.add_argument('--config_path', required=True, type=str,
+                        default='experiments/models/blink/biencoder/encode/20220630/config/'
+                                's05_config_encode_2013.json',
+                        help='Config file with a particular experiment hyperparameters')
+
+    parser.add_argument('--nr_gpus', type=int, default=-1, help='Nr. of gpus to run on.')
 
     args = parser.parse_args()
     logger.info('generating the candidate encodings: %s' % str(args))
-    config = json.load(open(args.config_file, 'rt'))
-
+    config = json.load(open(args.config_path, 'rt'))
+    config_parent = json.load(open(args.config_parent_path, 'rt'))
+    config_parent['model']['path_to_model'] = config['model']['path_to_model']
+    config_parent['cand_faiss_path'] = config['cand_faiss_path']
+    config = config_parent
     filtered_qids = set()
     base_experiment_path = config['base_experiment_path']
-    output_dir = os.path.join(base_experiment_path, config['output_file'])
+    output_dir = os.path.join(base_experiment_path, config['cand_faiss_path'])
     output_dir = os.path.dirname(output_dir)
     os.makedirs(output_dir, exist_ok=True)  # 'experiments/eval_biencoder_passages/20211002_local_cpu/output'
     repo = git.Repo(search_parent_directories=True)
@@ -137,4 +154,8 @@ if __name__ == '__main__':
     with open(os.path.join(output_dir, 'commit_hash_last_run_wikipedia_encode.txt'), 'wt') as outfile:
         outfile.write(sha)
 
-    main_entry(config, args.nr_gpus)
+    nr_gpus = args.nr_gpus
+    if nr_gpus == -1:
+        nr_gpus = torch.cuda.device_count()
+
+    main_entry(config, nr_gpus)
