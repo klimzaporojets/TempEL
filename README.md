@@ -1,5 +1,14 @@
 # TempEL
-Repository for Temporal Entity Linking (TempEL), accepted to NeurIPS 2022 Dataset and Benchmarks 
+Repository for the paper "TempEL: Linking Dynamically Evolving and Newly Emerging Entities", 
+accepted to NeurIPS 2022 Dataset and Benchmarks: 
+```
+@inproceedings{zaporojets2022tempel,
+  title={TempEL: Linking Dynamically Evolving and Newly Emerging Entities},
+  author={Zaporojets, Klim and Kaffee, Lucie-Aim{\'e}e and Deleu, Johannes and Demeester, Thomas and Develder, Chris and Augenstein, Isabelle},
+  year={2022},
+  booktitle={Thirty-sixth Conference on Neural Information Processing Systems Datasets and Benchmarks Track}
+}
+```
 
 ## 1 Dataset 
 The dataset can be downloaded from [this link](https://cloud.ilabt.imec.be/index.php/s/RinXy8NgqdW58RW) 
